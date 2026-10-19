@@ -197,7 +197,7 @@ class AnalyticsPageTests(TempMediaMixin, TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        for text in ['Gemini calls per day', 'By prompt version', 'Original (from code)',
+        for text in ['Gemini calls per day', 'By prompt version', 'Texting voice (redesign)',
                      'Gemini API error 503: overloaded', 'curator@mail.com', 'id="daily-data"']:
             with self.subTest(text=text):
                 self.assertContains(response, text)

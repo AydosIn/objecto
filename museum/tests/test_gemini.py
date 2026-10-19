@@ -56,8 +56,9 @@ class GenerateBiographyTests(TestCase):
         self.generate.return_value = fake_response(GOOD)
         result = self.call()
 
-        self.assertEqual(result.name, 'Gerald')
-        self.assertEqual(result.rivals, [{'name': 'The Dishwasher', 'reason': 'It knows what it did.'}])
+        self.assertEqual(result.name, 'gerald')
+        # Everything comes back in the app's lowercase voice.
+        self.assertEqual(result.rivals, [{'name': 'the dishwasher', 'reason': 'it knows what it did.'}])
         self.assertEqual(result.model_name, 'gemini-test-flash')
         self.assertEqual(result.usage['input_tokens'], 1700)
         self.assertNotIn('usage', result.as_model_fields())
@@ -88,12 +89,12 @@ class GenerateBiographyTests(TestCase):
     def test_falls_back_to_text_when_parsed_is_missing(self):
         response = fake_response(text=GeminiBiography.model_validate(GOOD).model_dump_json())
         self.generate.return_value = response
-        self.assertEqual(self.call().name, 'Gerald')
+        self.assertEqual(self.call().name, 'gerald')
 
     def test_retries_once_when_biography_is_incomplete(self):
         self.generate.side_effect = [fake_response({**GOOD, 'trauma': ''}), fake_response(GOOD)]
         with self.assertLogs('museum.services.gemini', 'WARNING'):
-            self.assertEqual(self.call().trauma, 'The Great Microwave Incident.')
+            self.assertEqual(self.call().trauma, 'the great microwave incident.')
         self.assertEqual(self.generate.call_count, 2)
 
     def test_gives_up_after_two_broken_responses(self):

@@ -22,7 +22,7 @@
     {% for exhibit, aura in tiles %}
       <li class="tile-wrap" style="--i:{{ forloop.counter }}">
         <a class="tile field--{{ aura.slug }}" href="{{ exhibit.get_absolute_url }}">
-          <img class="tile__photo" src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}" loading="lazy">
+          <img class="tile__photo" src="{{ exhibit.image.url }}" alt="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}" loading="lazy">
           <span class="tile__name">{{ exhibit.name|lower }}</span>
           <span class="tile__line">{{ exhibit.placard|lower }}</span>
         </a>

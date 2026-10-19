@@ -99,6 +99,11 @@ class Exhibit(models.Model):
     model_name = models.CharField(
         max_length=100, blank=True, help_text='Which Gemini model wrote the biography.'
     )
+    aura = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text='Colour of its recap, from the photo (services/aura.py). Empty = not worked out yet.',
+    )
     prompt_version = models.ForeignKey(
         SystemPrompt,
         on_delete=models.SET_NULL,

@@ -1,4 +1,5 @@
 import os
+from dataclasses import replace
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -157,3 +158,158 @@ class ExhibitDetailViewTests(TempMediaMixin, TestCase):
     def test_requires_login(self):
         response = self.client.get(self.exhibit.get_absolute_url())
         self.assertEqual(response.status_code, 302)
+
+
+class ExhibitActionTestCase(TempMediaMixin, TestCase):
+    """Owner, stranger and an exhibit, with Gemini mocked."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
+        self.stranger = User.objects.create_user(email='stranger@mail.com', password=PASSWORD)
+        self.exhibit = make_exhibit(
+            self.owner, name='Old Name', object_type='ceramic mug', trauma='Old trauma.'
+        )
+        self.new_story = replace(FAKE_BIOGRAPHY, name='Fresh Gerald', trauma='A brand new trauma.')
+        patcher = mock.patch('museum.views.generate_biography', return_value=self.new_story)
+        self.generate = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def follow_messages(self, response):
+        return [str(message) for message in response.context['messages']]
+
+
+class ExhibitRegenerateViewTests(ExhibitActionTestCase):
+    def url(self):
+        return reverse('museum:regenerate', args=[self.exhibit.pk])
+
+    def test_replaces_biography_and_keeps_photo(self):
+        photo_name = self.exhibit.image.name
+        self.client.force_login(self.owner)
+        response = self.client.post(self.url(), follow=True)
+
+        self.assertRedirects(response, self.exhibit.get_absolute_url())
+        self.exhibit.refresh_from_db()
+        self.assertEqual(self.exhibit.name, 'Fresh Gerald')
+        self.assertEqual(self.exhibit.trauma, 'A brand new trauma.')
+        self.assertEqual(self.exhibit.image.name, photo_name)
+        self.assertIn('Fresh Gerald sat down for a second interview.', self.follow_messages(response))
+        log = GenerationLog.objects.get()
+        self.assertEqual((log.kind, log.success), ('regenerate', True))
+
+    def test_sends_stored_photo_and_keeps_object_type(self):
+        self.client.force_login(self.owner)
+        self.client.post(self.url())
+
+        image_bytes, mime_type, hints = self.generate.call_args.args
+        with self.exhibit.image.open('rb') as stored:
+            self.assertEqual(image_bytes, stored.read())
+        self.assertEqual(mime_type, 'image/jpeg')
+        self.assertEqual(hints.object_type, 'ceramic mug')
+
+    def test_failure_keeps_old_biography(self):
+        self.generate.side_effect = GenerationFailed('Gemini API error 503: overloaded')
+        self.client.force_login(self.owner)
+        response = self.client.post(self.url(), follow=True)
+
+        self.exhibit.refresh_from_db()
+        self.assertEqual(self.exhibit.trauma, 'Old trauma.')
+        self.assertIn('The object is being shy. Try again in a moment.', self.follow_messages(response))
+        self.assertFalse(GenerationLog.objects.get().success)
+
+    def test_get_is_not_allowed(self):
+        self.client.force_login(self.owner)
+        self.assertEqual(self.client.get(self.url()).status_code, 405)
+        self.generate.assert_not_called()
+
+    def test_stranger_gets_404(self):
+        self.client.force_login(self.stranger)
+        self.assertEqual(self.client.post(self.url()).status_code, 404)
+        self.generate.assert_not_called()
+
+
+class ExhibitRenameViewTests(ExhibitActionTestCase):
+    def url(self):
+        return reverse('museum:rename', args=[self.exhibit.pk])
+
+    def test_rewrites_with_new_object_type(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(self.url(), {'object_type': '  glass vase '}, follow=True)
+
+        self.assertEqual(self.generate.call_args.args[2].object_type, 'glass vase')
+        self.exhibit.refresh_from_db()
+        # Gemini's fake says "ceramic mug"; the user's wording must win.
+        self.assertEqual(self.exhibit.object_type, 'glass vase')
+        self.assertEqual(self.exhibit.name, 'Fresh Gerald')
+        self.assertIn(
+            'Apologies to the glass vase. Its real story has been written.',
+            self.follow_messages(response),
+        )
+        self.assertEqual(GenerationLog.objects.get().kind, 'rename')
+
+    def test_regenerate_after_rename_keeps_the_new_type(self):
+        self.client.force_login(self.owner)
+        self.client.post(self.url(), {'object_type': 'glass vase'})
+        self.client.post(reverse('museum:regenerate', args=[self.exhibit.pk]))
+        self.assertEqual(self.generate.call_args.args[2].object_type, 'glass vase')
+
+    def test_empty_name_is_rejected_without_calling_gemini(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(self.url(), {'object_type': '   '}, follow=True)
+        self.assertIn('Tell us what the object really is.', self.follow_messages(response))
+        self.generate.assert_not_called()
+
+    def test_too_long_name_is_rejected(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(self.url(), {'object_type': 'v' * 101}, follow=True)
+        self.assertIn('Keep it under 100 characters.', self.follow_messages(response))
+        self.generate.assert_not_called()
+
+    def test_stranger_gets_404(self):
+        self.client.force_login(self.stranger)
+        response = self.client.post(self.url(), {'object_type': 'glass vase'})
+        self.assertEqual(response.status_code, 404)
+        self.generate.assert_not_called()
+
+
+class ExhibitDeleteViewTests(ExhibitActionTestCase):
+    def url(self):
+        return reverse('museum:delete', args=[self.exhibit.pk])
+
+    def test_confirm_page(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(self.url())
+        self.assertContains(response, 'Remove Old Name from the museum?')
+        self.assertTrue(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
+
+    def test_delete_removes_row_and_photo(self):
+        storage, photo_name = self.exhibit.image.storage, self.exhibit.image.name
+        self.client.force_login(self.owner)
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(self.url(), follow=True)
+
+        self.assertRedirects(response, reverse('landing'))
+        self.assertIn('Old Name has left the museum.', self.follow_messages(response))
+        self.assertFalse(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
+        self.assertFalse(storage.exists(photo_name))
+
+    def test_stranger_cannot_see_or_delete(self):
+        self.client.force_login(self.stranger)
+        self.assertEqual(self.client.get(self.url()).status_code, 404)
+        self.assertEqual(self.client.post(self.url()).status_code, 404)
+        self.assertTrue(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
+
+    def test_requires_login(self):
+        response = self.client.post(self.url())
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
+
+
+class ExhibitDetailActionsTests(ExhibitActionTestCase):
+    def test_detail_page_shows_all_actions(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(self.exhibit.get_absolute_url())
+        for url in ['regenerate', 'rename', 'delete']:
+            with self.subTest(action=url):
+                self.assertContains(response, reverse(f'museum:{url}', args=[self.exhibit.pk]))
+        self.assertContains(response, 'value="ceramic mug"')
+        self.assertContains(response, 'data-loading=')

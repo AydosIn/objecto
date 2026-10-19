@@ -10,7 +10,7 @@
     Photograph one object, up close and in good light. It will tell us everything.
   </p>
 
-  <form method="post" enctype="multipart/form-data" class="form upload" data-upload-form novalidate>
+  <form method="post" enctype="multipart/form-data" class="form upload" data-upload-form data-loading="Interviewing your object…" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}
 
@@ -30,16 +30,10 @@
       <div id="image-errors">{{ form.image.errors }}</div>
     {% endif %}
 
-    <button type="submit" class="btn btn--block" data-upload-submit>Interview this object</button>
+    <button type="submit" class="btn btn--block">Interview this object</button>
   </form>
 </section>
 
-<div class="loading-overlay" data-loading-overlay hidden>
-  <div class="loading-overlay__card" role="status" aria-live="polite">
-    <div class="spinner" aria-hidden="true"></div>
-    <p class="loading-overlay__text" data-loading-text>Interviewing your object…</p>
-  </div>
-</div>
 {% endblock %}
 
 {% block scripts %}

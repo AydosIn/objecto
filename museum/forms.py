@@ -21,3 +21,16 @@ class ExhibitUploadForm(forms.Form):
         except InvalidImage as error:
             raise ValidationError(str(error))
         return upload
+
+
+class RenameForm(forms.Form):
+    object_type = forms.CharField(
+        label='What is it really?',
+        max_length=100,
+        strip=True,
+        error_messages={
+            'required': 'Tell us what the object really is.',
+            'max_length': 'Keep it under 100 characters.',
+        },
+        widget=forms.TextInput(attrs={'placeholder': 'e.g. glass vase', 'autocomplete': 'off'}),
+    )

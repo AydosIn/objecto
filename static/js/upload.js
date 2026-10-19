@@ -1,29 +1,18 @@
-// Upload page: show a preview of the chosen photo, then a loading overlay
-// while the server interviews the object. No framework, no build step.
+// Upload page: show a preview of the chosen photo before it is sent.
+// The loading overlay on submit is handled by loading.js (data-loading on the form).
 (function () {
   const form = document.querySelector('[data-upload-form]');
   if (!form) return;
 
   const MAX_BYTES = 10 * 1024 * 1024;
-  const LOADING_LINES = [
-    'Interviewing your object…',
-    'Asking about its childhood…',
-    'Taking notes on its rivals…',
-    'Gently bringing up the trauma…',
-    'Asking what it really thinks of you…',
-  ];
 
   const input = form.querySelector('[data-upload-input]');
   const preview = form.querySelector('[data-upload-preview]');
   const prompt = form.querySelector('[data-upload-prompt]');
   const hint = form.querySelector('[data-upload-hint]');
   const error = form.querySelector('[data-upload-error]');
-  const submit = form.querySelector('[data-upload-submit]');
-  const overlay = document.querySelector('[data-loading-overlay]');
-  const loadingText = document.querySelector('[data-loading-text]');
 
   let previewUrl = null;
-  let loadingTimer = null;
 
   function showError(message) {
     error.textContent = message;
@@ -67,26 +56,6 @@
     if (!input.files.length) {
       event.preventDefault();
       showError('Choose or take a photo first.');
-      return;
-    }
-    // Block double submits: one photo, one interview.
-    submit.disabled = true;
-    overlay.hidden = false;
-    let line = 0;
-    loadingTimer = setInterval(function () {
-      line = (line + 1) % LOADING_LINES.length;
-      loadingText.textContent = LOADING_LINES[line];
-    }, 2500);
-  });
-
-  // Coming back with the browser's Back button can restore the page as it was
-  // left, overlay and all. Reset it.
-  window.addEventListener('pageshow', function (event) {
-    if (event.persisted) {
-      submit.disabled = false;
-      overlay.hidden = true;
-      clearInterval(loadingTimer);
-      loadingText.textContent = LOADING_LINES[0];
     }
   });
 })();

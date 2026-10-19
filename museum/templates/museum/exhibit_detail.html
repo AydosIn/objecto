@@ -45,9 +45,28 @@
       {{ exhibit.opinion_of_owner|linebreaks }}
     </section>
 
-    <p class="exhibit__actions">
-      <a class="btn btn--ghost" href="{% url 'museum:new' %}">Add another object</a>
-    </p>
+    <section class="exhibit__actions" aria-label="Exhibit actions">
+      <form method="post" action="{% url 'museum:regenerate' exhibit.pk %}"
+            data-loading="Asking {{ exhibit.name }} for a second interview…">
+        {% csrf_token %}
+        <button type="submit" class="btn">Regenerate story</button>
+      </form>
+
+      <details class="rename">
+        <summary>Wrong object? Rename it</summary>
+        <form method="post" action="{% url 'museum:rename' exhibit.pk %}" class="form rename__form"
+              data-loading="Apologising to the object and starting over…">
+          {% csrf_token %}
+          {{ rename_form }}
+          <button type="submit" class="btn btn--ghost">Rename and rewrite</button>
+        </form>
+      </details>
+
+      <div class="exhibit__secondary">
+        <a href="{% url 'museum:new' %}">Add another object</a>
+        <a class="link--danger" href="{% url 'museum:delete' exhibit.pk %}">Delete exhibit</a>
+      </div>
+    </section>
   </div>
 </article>
 {% endblock %}

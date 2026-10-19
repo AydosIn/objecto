@@ -496,7 +496,56 @@ h3 {
 }
 
 .exhibit__actions {
+  display: grid;
+  gap: 16px;
   margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+
+.exhibit__actions form {
+  margin: 0;
+}
+
+.rename summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.rename__form {
+  margin-top: 12px;
+}
+
+.exhibit__secondary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9375rem;
+}
+
+.link--danger {
+  color: #a32020;
+}
+
+.btn--danger {
+  background: #a32020;
+  border-color: #a32020;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panel__thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
 }
 
 /* Landing */

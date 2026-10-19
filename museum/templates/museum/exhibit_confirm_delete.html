@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Delete {{ exhibit.name }} · Object Biographies{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <img class="panel__thumb" src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
+  <h1>Remove {{ exhibit.name }} from the museum?</h1>
+  <p class="panel__lead">
+    {{ exhibit.name }}, {{ exhibit.title }}, and its photo will be deleted for good.
+    This can't be undone.
+  </p>
+  <form method="post" class="confirm-actions">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--danger">Delete forever</button>
+    <a class="btn btn--ghost" href="{{ exhibit.get_absolute_url }}">Keep it</a>
+  </form>
+</section>
+{% endblock %}

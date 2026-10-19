@@ -3,3 +3,4 @@ Django==5.2.18
 google-genai==2.31.0
 pillow-heif==1.8.1
 pillow==13.0.0
+whitenoise==6.12.0

@@ -97,6 +97,32 @@ h3 {
   gap: 12px;
 }
 
+.site-nav form {
+  margin: 0;
+}
+
+.site-nav__link {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-nav__link:hover {
+  color: var(--accent);
+}
+
+.site-nav__button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 /* Main + footer */
 
 .site-main {
@@ -132,6 +158,130 @@ h3 {
   color: var(--accent);
 }
 
+.btn--small {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
+.btn--block {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+/* Flash messages */
+
+.messages {
+  margin-bottom: 24px;
+}
+
+.message {
+  margin: 0 0 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+}
+
+.message--success {
+  border-color: #9bb89a;
+  background: #eef5ec;
+}
+
+.message--error {
+  border-color: #d39a9a;
+  background: #fbeeee;
+}
+
+/* Panels: narrow centered cards for auth and profile pages */
+
+.panel {
+  max-width: 440px;
+  margin: 0 auto;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 24px var(--gutter);
+}
+
+.panel h1 {
+  font-size: 1.75rem;
+}
+
+.panel__lead {
+  color: var(--ink-muted);
+  margin: 0 0 20px;
+}
+
+.panel__links {
+  margin: 20px 0 0;
+  font-size: 0.9375rem;
+  color: var(--ink-muted);
+}
+
+/* Forms. Django's {{ form }} renders one <div> per field with a label,
+   help text (.helptext) and errors (.errorlist). */
+
+.form > div {
+  margin-bottom: 16px;
+}
+
+.form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.form input[type="text"],
+.form input[type="email"],
+.form input[type="password"],
+.form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem; /* 16px stops iOS Safari zooming in on focus */
+}
+
+.form input:focus,
+.form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.form .helptext {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+}
+
+.form .helptext ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.errorlist {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.errorlist.nonfield {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid #d39a9a;
+  border-radius: var(--radius);
+  background: #fbeeee;
+}
+
 /* Landing */
 
 .eyebrow {
@@ -154,6 +304,13 @@ h3 {
 .hero__lead {
   font-size: 1.125rem;
   color: var(--ink-muted);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .steps {
@@ -185,6 +342,10 @@ h3 {
 }
 
 @media (min-width: 720px) {
+  .panel {
+    padding: 32px;
+  }
+
   .hero__title {
     font-size: 3rem;
   }

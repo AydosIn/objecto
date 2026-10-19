@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Your profile · Object Biographies{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1>Your profile</h1>
+  <p class="panel__lead">
+    Signed in as <strong>{{ user.email }}</strong>. These details are optional;
+    they help your objects form a more personal opinion of you.
+  </p>
+  <form method="post" class="form" novalidate>
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn--block">Save profile</button>
+  </form>
+</section>
+{% endblock %}

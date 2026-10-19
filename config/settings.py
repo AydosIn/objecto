@@ -91,6 +91,14 @@ DATABASES = {
 # Users log in with email + password (accounts.User has no username).
 AUTH_USER_MODEL = 'accounts.User'
 
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'profile'  # becomes the museum in Phase 7
+LOGOUT_REDIRECT_URL = 'landing'
+
+# Password reset emails are printed in the runserver terminal in development.
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='curator@objectbiographies.local')
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

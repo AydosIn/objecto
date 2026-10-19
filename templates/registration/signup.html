@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up · Object Biographies{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1>Open your museum</h1>
+  <p class="panel__lead">One account, one private collection of household secrets.</p>
+  <form method="post" class="form" novalidate>
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn--block">Sign up</button>
+  </form>
+  <p class="panel__links">
+    Already have an account? <a href="{% url 'login' %}">Log in</a>
+  </p>
+</section>
+{% endblock %}

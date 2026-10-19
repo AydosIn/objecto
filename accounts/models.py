@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
@@ -48,3 +49,25 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class Profile(models.Model):
+    """Optional details that make an object's opinion of its owner more personal."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile'
+    )
+    display_name = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text='What your objects call you behind your back.',
+    )
+    about_me = models.TextField(
+        'about me',
+        max_length=300,
+        blank=True,
+        help_text='Optional, up to 300 characters. Objects read this before forming their opinion of you.',
+    )
+
+    def __str__(self):
+        return self.display_name or self.user.email

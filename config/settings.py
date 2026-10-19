@@ -127,7 +127,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tashkent'  # "today" for the daily limit is an Uzbekistan day
 
 USE_I18N = True
 
@@ -155,6 +155,9 @@ GEMINI_MODEL = env('GEMINI_MODEL', default='')
 # Google's pricing page). Thinking tokens are billed at the output rate.
 GEMINI_PRICE_INPUT_PER_M = env.float('GEMINI_PRICE_INPUT_PER_M', default=0.75)
 GEMINI_PRICE_OUTPUT_PER_M = env.float('GEMINI_PRICE_OUTPUT_PER_M', default=3.75)
+
+# Interviews (new exhibit, reroll, rename) each user gets per day. Staff are not limited.
+DAILY_GENERATION_LIMIT = env.int('DAILY_GENERATION_LIMIT', default=5)
 
 # Tests must never call the real API: an unmocked call fails fast instead.
 if 'test' in sys.argv[1:2]:

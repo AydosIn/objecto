@@ -5,12 +5,26 @@
 {% block field %}midnight{% endblock %}
 
 {% block content %}
+{% if remaining == 0 %}
+  <section class="camera out-of-interviews">
+    <h1 class="shout">that's {{ quota_dots|length }} for today.</h1>
+    <p class="talk">your stuff needs a break. come back tomorrow for {{ quota_dots|length }} more interviews.</p>
+    <p class="quota" aria-hidden="true"><span class="quota__dots">{% for left in quota_dots %}<i class="is-used"></i>{% endfor %}</span></p>
+    <a class="btn" href="{% url 'museum:index' %}">back to your museum</a>
+  </section>
+{% else %}
 <form method="post" enctype="multipart/form-data" class="camera" data-upload-form data-loading="ok it's talking" novalidate>
   {% csrf_token %}
   <header class="page-head">
     <h1 class="say">show me the object.</h1>
     <p class="talk">one thing, up close, good light. it'll take it from there.</p>
   </header>
+  {% if remaining is not None %}
+    <p class="quota" aria-label="{{ remaining }} interview{{ remaining|pluralize }} left today">
+      <span class="quota__dots" aria-hidden="true">{% for left in quota_dots %}<i{% if not left %} class="is-used"{% endif %}></i>{% endfor %}</span>
+      {{ remaining }} interview{{ remaining|pluralize }} left today
+    </p>
+  {% endif %}
 
   {{ form.non_field_errors }}
   <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}"
@@ -38,6 +52,7 @@
     <p class="shutter-label" id="shutter-label" data-shutter-label>interview it</p>
   </div>
 </form>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

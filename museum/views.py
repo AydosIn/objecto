@@ -16,6 +16,7 @@ from .forms import ExhibitUploadForm, RenameForm
 from .models import Exhibit, GenerationLog
 from .services.aura import RAMP, aura_for, slide_fields
 from .services.gemini import BiographyError, BiographyHints, generate_biography
+from .services.limits import limit_message, quota_context, remaining_today
 
 
 def hints_for(user, object_type=''):
@@ -87,9 +88,17 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
     form_class = ExhibitUploadForm
     template_name = 'museum/exhibit_new.html'
 
+    def get_context_data(self, **kwargs):
+        return {**super().get_context_data(**kwargs), **quota_context(self.request.user)}
+
     def form_valid(self, form):
         user = self.request.user
         photo = form.processed_image
+
+        # Out of interviews for today: stop before Gemini, so it costs nothing.
+        if remaining_today(user) == 0:
+            form.add_error('image', limit_message())
+            return self.form_invalid(form)
 
         # Gemini first: if it fails, nothing (no row, no file) has been saved yet.
         started = time.monotonic()
@@ -124,6 +133,7 @@ class ExhibitDetailView(OwnedExhibitMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['rename_form'] = RenameForm(initial={'object_type': self.object.object_type})
         context.update(recap_colours(self.object))
+        context.update(quota_context(self.request.user))
         return context
 
 
@@ -136,6 +146,9 @@ class RewriteBiographyView(OwnedExhibitMixin, SingleObjectMixin, View):
 
     def rewrite(self, exhibit, object_type):
         user = self.request.user
+        if remaining_today(user) == 0:
+            messages.error(self.request, limit_message())
+            return redirect(exhibit)
         try:
             with exhibit.image.open('rb') as stored:
                 image_bytes = stored.read()

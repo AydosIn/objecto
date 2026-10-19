@@ -105,7 +105,7 @@ Landing page ──► Sign up / Log in ──► My Museum (grid)
 - FR-22: Delete asks for confirmation and removes both the database row and the image file.
 
 ### 6.5 Limits
-- FR-23: Each user gets at most 30 generations (new + regenerate) per day, to protect the API budget. Configurable in settings. Hitting the limit shows a clear message.
+- FR-23: Each user gets 5 interviews per day (a new exhibit, a reroll or a rename each count as one), to protect the API budget. "Today" is the calendar day in Uzbekistan time (Asia/Tashkent). Only calls Gemini answered count (stories and "not an object" refusals); failures on Google's side don't. Staff accounts are not limited. The upload page shows what's left as five dots; at zero it says to come back tomorrow, and the limit is checked before Gemini is called. `DAILY_GENERATION_LIMIT` in settings. Paid extra interviews (credits + Stripe) are a later phase.
 
 ### 6.6 Admin
 - FR-24: Django admin at `/admin/` (staff only) lists users, profiles, exhibits (with image thumbnails, search and filters) and generation logs.
@@ -284,6 +284,6 @@ v1 calls Gemini synchronously inside the POST request. It's simple and fine for 
 
 ## 14. Open questions
 1. ~~Login with username or email?~~ **Decided:** email + password (see FR-1).
-2. Should the daily limit (30) be lower while you're on the Gemini free tier?
+2. ~~Daily limit?~~ **Decided:** 5 per day (see FR-23).
 3. Keep uploaded photos forever, or auto-delete images after N days for privacy?
 4. Should "Opinion of you" use the about-me text by default, or should that be a toggle per generation?

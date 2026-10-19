@@ -11,5 +11,6 @@ class MuseumConfig(AppConfig):
 
         register_heif_opener()
 
-        # Connects the post_delete handler that removes an exhibit's photo file.
-        from . import signals  # noqa: F401
+        # Connects the post_delete handler that removes an exhibit's photo file,
+        # and registers the startup warning for missing Gemini settings.
+        from . import checks, signals  # noqa: F401

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import sys
 from pathlib import Path
 
 import environ
@@ -146,6 +147,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 GEMINI_MODEL = env('GEMINI_MODEL', default='')
+
+# Tests must never call the real API: an unmocked call fails fast instead.
+if 'test' in sys.argv[1:2]:
+    GEMINI_API_KEY = ''
+    SILENCED_SYSTEM_CHECKS = ['museum.W001']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

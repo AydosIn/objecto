@@ -1,26 +1,21 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.shortcuts import redirect
 from django.views.generic import DetailView, FormView
 
 from .forms import ExhibitUploadForm
-from .models import Exhibit
+from .models import Exhibit, GenerationLog
+from .services.gemini import BiographyError, BiographyHints, generate_biography
 
 
-def placeholder_biography():
-    """Stands in for Gemini until Phase 5, with the same fields Gemini will return."""
-    return {
-        'object_type': 'mysterious object',
-        'name': 'Gerald the Placeholder',
-        'title': 'Keeper of the Unwritten Story',
-        'placard': 'Waiting patiently for an AI to tell its tale.',
-        'origin_story': 'Nobody knows where Gerald came from. Not even Gerald.',
-        'trauma': 'Being photographed before the biography service was installed.',
-        'rivals': [{'name': 'Lorem Ipsum', 'reason': 'Also pretends to be real text.'}],
-        'hopes_and_fears': 'Hopes for Phase 5. Fears staying a placeholder forever.',
-        'opinion_of_owner': 'Clearly a developer. Respects the process.',
-        'model_name': 'placeholder',
-    }
+def hints_for(user, object_type=''):
+    profile = getattr(user, 'profile', None)
+    return BiographyHints(
+        object_type=object_type,
+        owner_name=profile.display_name if profile else '',
+        about_me=profile.about_me if profile else '',
+    )
 
 
 class ExhibitCreateView(LoginRequiredMixin, FormView):
@@ -28,11 +23,25 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
     template_name = 'museum/exhibit_new.html'
 
     def form_valid(self, form):
+        user = self.request.user
         photo = form.processed_image
-        exhibit = Exhibit(owner=self.request.user, **placeholder_biography())
-        # The stored file is the cleaned JPEG, never the original upload.
-        exhibit.image.save('photo.jpg', ContentFile(photo.content), save=False)
-        exhibit.save()
+
+        # Gemini first: if it fails, nothing (no row, no file) has been saved yet.
+        try:
+            biography = generate_biography(photo.content, photo.mime_type, hints_for(user))
+        except BiographyError as error:
+            GenerationLog.objects.create(
+                user=user, kind=GenerationLog.Kind.CREATE, success=False, error=str(error)[:255]
+            )
+            form.add_error('image', error.user_message)
+            return self.form_invalid(form)
+
+        with transaction.atomic():
+            exhibit = Exhibit(owner=user, **biography.as_model_fields())
+            # The stored file is the cleaned JPEG, never the original upload.
+            exhibit.image.save('photo.jpg', ContentFile(photo.content), save=False)
+            exhibit.save()
+            GenerationLog.objects.create(user=user, kind=GenerationLog.Kind.CREATE, success=True)
         return redirect(exhibit)
 
 

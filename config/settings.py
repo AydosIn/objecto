@@ -52,6 +52,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Serves /static/ when DEBUG is off (Vercel has no web server in front of Django).
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -139,6 +141,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Serve straight from the app and static/ folders, so the deploy works
+# without a collectstatic step.
+WHITENOISE_USE_FINDERS = True
 
 # Uploaded photos. Served by Django only while DEBUG is on.
 MEDIA_URL = 'media/'

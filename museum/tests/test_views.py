@@ -285,7 +285,7 @@ class ExhibitDeleteViewTests(ExhibitActionTestCase):
     def test_confirm_page(self):
         self.client.force_login(self.owner)
         response = self.client.get(self.url())
-        self.assertContains(response, 'Remove Old Name from the museum?')
+        self.assertContains(response, 'Delete Old Name?')
         self.assertTrue(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
 
     def test_delete_removes_row_and_photo(self):
@@ -320,3 +320,15 @@ class ExhibitDetailActionsTests(ExhibitActionTestCase):
                 self.assertContains(response, reverse(f'museum:{url}', args=[self.exhibit.pk]))
         self.assertContains(response, 'value="ceramic mug"')
         self.assertContains(response, 'data-loading=')
+
+    def test_rename_sheet_and_delete_alert_are_on_the_page(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(self.exhibit.get_absolute_url())
+        self.assertContains(response, 'id="rename-sheet"')
+        self.assertContains(response, 'data-open-dialog="rename-sheet"')
+        self.assertContains(response, 'id="delete-alert"')
+        # The delete row is a real link, so it still works without JavaScript.
+        self.assertContains(
+            response, f'href="{reverse("museum:delete", args=[self.exhibit.pk])}"'
+        )
+        self.assertContains(response, 'Delete Old Name?')

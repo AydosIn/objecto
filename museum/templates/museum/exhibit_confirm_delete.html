@@ -1,19 +1,17 @@
 {% extends "base.html" %}
 
 {% block title %}Delete {{ exhibit.name }} · Object Biographies{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
 
 {% block content %}
-<section class="panel">
-  <img class="panel__thumb" src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
-  <h1>Remove {{ exhibit.name }} from the museum?</h1>
-  <p class="panel__lead">
-    {{ exhibit.name }}, {{ exhibit.title }}, and its photo will be deleted for good.
-    This can't be undone.
-  </p>
-  <form method="post" class="confirm-actions">
-    {% csrf_token %}
-    <button type="submit" class="btn btn--danger">Delete forever</button>
-    <a class="btn btn--ghost" href="{{ exhibit.get_absolute_url }}">Keep it</a>
-  </form>
-</section>
+<header class="page-header page-header--center">
+  <img class="confirm-photo" src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
+  <h1 class="title-2">Delete {{ exhibit.name }}?</h1>
+  <p class="callout">{{ exhibit.name }}, {{ exhibit.title }}, and its photo will be removed for good. This can't be undone.</p>
+</header>
+<form method="post" class="button-stack">
+  {% csrf_token %}
+  <button type="submit" class="button button--destructive button--block">Delete</button>
+  <a class="button button--plain button--block" href="{{ exhibit.get_absolute_url }}">Cancel</a>
+</form>
 {% endblock %}

@@ -23,6 +23,10 @@
     form.querySelectorAll('button, [type="submit"]').forEach(function (button) {
       button.disabled = true;
     });
+    // A form inside a sheet: close the sheet so the overlay isn't hidden behind it
+    // (an open modal dialog always sits on top of the rest of the page).
+    const dialog = form.closest('dialog');
+    if (dialog) dialog.close();
     const lines = [form.dataset.loading || 'Interviewing your object…'].concat(FOLLOW_UPS);
     let line = 0;
     text.textContent = lines[0];

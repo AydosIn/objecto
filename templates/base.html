@@ -2,58 +2,85 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <title>{% block title %}Object Biographies{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
 <body>
-  <header class="site-header">
-    <div class="container site-header__inner">
-      <a class="brand" href="{% url 'landing' %}">
-        <span class="brand__mark" aria-hidden="true">❦</span>
-        Object Biographies
-      </a>
-      <nav class="site-nav" aria-label="Main">
-        {% if user.is_authenticated %}
-          <a class="btn btn--small" href="{% url 'museum:new' %}">Add an object</a>
-          <a class="site-nav__link" href="{% url 'profile' %}">{{ user.profile.display_name|default:user.email }}</a>
-          <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="site-nav__link site-nav__button">Log out</button>
-          </form>
-        {% else %}
-          <a class="site-nav__link" href="{% url 'login' %}">Log in</a>
-          <a class="btn btn--small" href="{% url 'signup' %}">Sign up</a>
-        {% endif %}
-      </nav>
-    </div>
+  {# Icons drawn in the spirit of SF Symbols, used as <svg class="icon"><use href="#i-name"></use></svg> #}
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3.5 8.5A2.5 2.5 0 0 1 6 6h1.8l1.4-2h5.6l1.4 2H18a2.5 2.5 0 0 1 2.5 2.5v8.5a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17z"/><circle cx="12" cy="12.5" r="3.6"/></symbol>
+    <symbol id="i-columns" viewBox="0 0 24 24"><path d="M3 9.5 12 4l9 5.5M5.5 10.5v7.5M9.8 10.5v7.5M14.2 10.5v7.5M18.5 10.5v7.5M3 20.5h18"/></symbol>
+    <symbol id="i-bubble" viewBox="0 0 24 24"><path d="M20.5 11.5c0 4.1-3.8 7.2-8.5 7.2-1.1 0-2.1-.2-3.1-.5L4 19.8l1.4-3.6C4.2 15 3.5 13.3 3.5 11.5c0-4.1 3.8-7.2 8.5-7.2s8.5 3.1 8.5 7.2z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.3-5.4M19.5 4.5v4.2h-4.2"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M14.8 5.2 18.8 9.2M4.5 19.5l1-4.5L16 4.5a1.4 1.4 0 0 1 2 0l1.5 1.5a1.4 1.4 0 0 1 0 2L9 18.5z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5v-2h5v2M6.5 6.5l1 13h9l1-13M10 10.5v5.5M14 10.5v5.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.2 12.4 2.6 2.6 5-5.4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.4v.1"/></symbol>
+    <symbol id="i-mug" viewBox="0 0 24 24"><path d="M4.5 8h11v6.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM15.5 10h1.7a2.4 2.4 0 0 1 0 4.8h-1.7M8 3.5v2M11 3v2.5M14 3.5v2"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h7M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5"/></symbol>
+  </svg>
+
+  <header class="app-bar">
+    <a class="app-bar__brand" href="{% url 'landing' %}">
+      <span class="app-icon" aria-hidden="true"><svg class="icon"><use href="#i-columns"></use></svg></span>
+      <span class="app-bar__name">Object Biographies</span>
+    </a>
+    <nav class="app-bar__actions" aria-label="Main">
+      {% if user.is_authenticated %}
+        <a class="round-button" href="{% url 'museum:new' %}" aria-label="Add an object" title="Add an object">
+          <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+        </a>
+        <a class="avatar" href="{% url 'profile' %}" aria-label="Your profile" title="Your profile">{{ user.profile.display_name|default:user.email|first }}</a>
+      {% else %}
+        <a class="button button--plain button--small app-bar__login" href="{% url 'login' %}">Log in</a>
+        <a class="button button--small" href="{% url 'signup' %}">Sign up</a>
+      {% endif %}
+    </nav>
   </header>
 
-  <main class="container site-main">
-    {% if messages %}
-      <div class="messages">
-        {% for message in messages %}
-          <p class="message message--{{ message.tags }}" role="status">{{ message }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
+  {% if messages %}
+    <div class="banners" role="status">
+      {% for message in messages %}
+        <p class="banner banner--{{ message.tags }}">
+          <svg class="icon" aria-hidden="true"><use href="#{% if message.level_tag == 'error' %}i-alert{% else %}i-check{% endif %}"></use></svg>
+          <span>{{ message }}</span>
+        </p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="page {% block page_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      The secret lives of household objects. No mugs were harmed.
-    </div>
+  <footer class="site-footer footnote">
+    The secret lives of household objects.
   </footer>
 
-  <div class="loading-overlay" data-loading-overlay hidden>
-    <div class="loading-overlay__card" role="status" aria-live="polite">
-      <div class="spinner" aria-hidden="true"></div>
-      <p class="loading-overlay__text" data-loading-text>Interviewing your object…</p>
+  <div class="hud" data-loading-overlay hidden>
+    <div class="hud__card" role="status" aria-live="polite">
+      <svg class="activity" viewBox="0 0 40 40" aria-hidden="true">
+        <g stroke="currentColor" stroke-width="3.6" stroke-linecap="round">
+          <line x1="20" y1="4" x2="20" y2="11"/>
+          <line x1="20" y1="4" x2="20" y2="11" transform="rotate(-45 20 20)" opacity=".85"/>
+          <line x1="20" y1="4" x2="20" y2="11" transform="rotate(-90 20 20)" opacity=".7"/>
+          <line x1="20" y1="4" x2="20" y2="11" transform="rotate(-135 20 20)" opacity=".58"/>
+          <line x1="20" y1="4" x2="20" y2="11" transform="rotate(-180 20 20)" opacity=".46"/>
+          <line x1="20" y1="4" x2="20" y2="11" transform="rotate(-225 20 20)" opacity=".36"/>
+          <line x1="20" y1="4" x2="20" y2="11" transform="rotate(-270 20 20)" opacity=".28"/>
+          <line x1="20" y1="4" x2="20" y2="11" transform="rotate(-315 20 20)" opacity=".2"/>
+        </g>
+      </svg>
+      <p class="hud__text" data-loading-text>Interviewing your object…</p>
     </div>
   </div>
 
   <script src="{% static 'js/loading.js' %}" defer></script>
+  <script src="{% static 'js/dialogs.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

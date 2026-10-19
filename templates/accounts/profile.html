@@ -1,18 +1,27 @@
 {% extends "base.html" %}
 
 {% block title %}Your profile · Object Biographies{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
 
 {% block content %}
-<section class="panel">
-  <h1>Your profile</h1>
-  <p class="panel__lead">
-    Signed in as <strong>{{ user.email }}</strong>. These details are optional;
-    they help your objects form a more personal opinion of you.
-  </p>
-  <form method="post" class="form" novalidate>
+<header class="page-header page-header--center">
+  <span class="avatar avatar--large" aria-hidden="true">{{ user.profile.display_name|default:user.email|first }}</span>
+  <h1 class="title-2">{{ user.profile.display_name|default:"Your profile" }}</h1>
+  <p class="callout">{{ user.email }}</p>
+</header>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% include "includes/form_group.html" with form=form %}
+  <div class="button-stack">
+    <button type="submit" class="button button--block">Save profile</button>
+  </div>
+</form>
+
+<div class="group group--spaced">
+  <form method="post" action="{% url 'logout' %}">
     {% csrf_token %}
-    {{ form }}
-    <button type="submit" class="btn btn--block">Save profile</button>
+    <button type="submit" class="row row-action row-action--destructive">Log out</button>
   </form>
-</section>
+</div>
 {% endblock %}

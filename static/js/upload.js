@@ -11,6 +11,7 @@
   const prompt = form.querySelector('[data-upload-prompt]');
   const hint = form.querySelector('[data-upload-hint]');
   const error = form.querySelector('[data-upload-error]');
+  const change = form.querySelector('[data-upload-change]');
 
   let previewUrl = null;
 
@@ -24,6 +25,7 @@
     showError('');
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     preview.hidden = true;
+    change.hidden = true;
 
     if (!file) {
       prompt.hidden = false;
@@ -43,6 +45,7 @@
 
   preview.addEventListener('load', function () {
     preview.hidden = false;
+    change.hidden = false;
     prompt.hidden = true;
   });
 

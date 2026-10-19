@@ -32,5 +32,7 @@ class RenameForm(forms.Form):
             'required': 'Tell us what the object really is.',
             'max_length': 'Keep it under 100 characters.',
         },
-        widget=forms.TextInput(attrs={'placeholder': 'e.g. glass vase', 'autocomplete': 'off'}),
+        widget=forms.TextInput(
+            attrs={'placeholder': 'e.g. glass vase', 'autocomplete': 'off', 'autofocus': True}
+        ),
     )

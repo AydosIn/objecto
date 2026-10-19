@@ -1,0 +1,28 @@
+{% comment %}
+  Renders a form as an iOS inset grouped list: one row per field, label above the
+  input, errors in the row, help texts as gray footnotes under the group.
+  Usage: {% include "includes/form_group.html" with form=form %}
+{% endcomment %}
+{% if form.non_field_errors %}
+  <div class="form-alert" role="alert">
+    <svg class="icon" aria-hidden="true"><use href="#i-alert"></use></svg>
+    <div>{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+  </div>
+{% endif %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="group">
+  {% for field in form.visible_fields %}
+    <div class="row field{% if field.errors %} field--invalid{% endif %}">
+      <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% for error in field.errors %}
+        <p class="field__error">{{ error }}</p>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+{% for field in form.visible_fields %}
+  {% if field.help_text %}
+    <div class="group-footer" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</div>
+  {% endif %}
+{% endfor %}

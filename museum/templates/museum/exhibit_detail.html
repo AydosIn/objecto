@@ -3,70 +3,112 @@
 {% block title %}{{ exhibit.name }} · Object Biographies{% endblock %}
 
 {% block content %}
-<article class="exhibit">
-  <figure class="exhibit__photo">
+<article>
+  <figure class="exhibit-photo">
     <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
   </figure>
 
-  <div class="exhibit__body">
-    <p class="eyebrow">{{ exhibit.object_type }} · Acquired {{ exhibit.created_at|date:"j M Y" }}</p>
-    <h1 class="exhibit__name">{{ exhibit.name }}</h1>
-    <p class="exhibit__title">{{ exhibit.title }}</p>
-    <p class="placard">{{ exhibit.placard }}</p>
+  <header>
+    <div class="exhibit-meta">
+      <span class="pill">{{ exhibit.object_type|capfirst }}</span>
+      <span class="footnote">Acquired {{ exhibit.created_at|date:"j F Y" }}</span>
+    </div>
+    <h1 class="large-title">{{ exhibit.name }}</h1>
+    <p class="exhibit-epithet">{{ exhibit.title }}</p>
+  </header>
 
-    <section class="bio-section">
-      <h2>Origin story</h2>
-      {{ exhibit.origin_story|linebreaks }}
+  <blockquote class="placard">{{ exhibit.placard }}</blockquote>
+
+  <section class="story-section">
+    <h2 class="title-2">Origin story</h2>
+    <div class="story">{{ exhibit.origin_story|linebreaks }}</div>
+  </section>
+
+  <section class="story-section">
+    <h2 class="title-2">Defining trauma</h2>
+    <div class="story">{{ exhibit.trauma|linebreaks }}</div>
+  </section>
+
+  {% if exhibit.rivals %}
+    <section class="story-section">
+      <h2 class="title-2">Rivals</h2>
+      <div class="group">
+        {% for rival in exhibit.rivals %}
+          <div class="row">
+            <div class="row__text">
+              <p class="headline">{{ rival.name }}</p>
+              <p class="row__subtitle">{{ rival.reason }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
     </section>
+  {% endif %}
 
-    <section class="bio-section">
-      <h2>Defining trauma</h2>
-      {{ exhibit.trauma|linebreaks }}
-    </section>
+  <section class="story-section">
+    <h2 class="title-2">Hopes and fears</h2>
+    <div class="story">{{ exhibit.hopes_and_fears|linebreaks }}</div>
+  </section>
 
-    {% if exhibit.rivals %}
-      <section class="bio-section">
-        <h2>Rivals</h2>
-        <ul class="rivals">
-          {% for rival in exhibit.rivals %}
-            <li><strong>{{ rival.name }}</strong>: {{ rival.reason }}</li>
-          {% endfor %}
-        </ul>
-      </section>
-    {% endif %}
+  <section class="story-section">
+    <h2 class="title-2">Its opinion of you</h2>
+    <div class="message">
+      <span class="message__sender">{{ exhibit.name }}</span>
+      <div class="message__bubble">{{ exhibit.opinion_of_owner|linebreaks }}</div>
+    </div>
+  </section>
 
-    <section class="bio-section">
-      <h2>Hopes &amp; fears</h2>
-      {{ exhibit.hopes_and_fears|linebreaks }}
-    </section>
-
-    <section class="bio-section bio-section--opinion">
-      <h2>Its opinion of you</h2>
-      {{ exhibit.opinion_of_owner|linebreaks }}
-    </section>
-
-    <section class="exhibit__actions" aria-label="Exhibit actions">
+  <section class="exhibit-actions" aria-label="Exhibit actions">
+    <div class="group">
       <form method="post" action="{% url 'museum:regenerate' exhibit.pk %}"
             data-loading="Asking {{ exhibit.name }} for a second interview…">
         {% csrf_token %}
-        <button type="submit" class="btn">Regenerate story</button>
+        <button type="submit" class="row row--icon row-action">
+          <span class="row__glyph" aria-hidden="true"><svg class="icon"><use href="#i-refresh"></use></svg></span>
+          <span class="row__text">Regenerate story</span>
+        </button>
       </form>
-
-      <details class="rename">
-        <summary>Wrong object? Rename it</summary>
-        <form method="post" action="{% url 'museum:rename' exhibit.pk %}" class="form rename__form"
-              data-loading="Apologising to the object and starting over…">
-          {% csrf_token %}
-          {{ rename_form }}
-          <button type="submit" class="btn btn--ghost">Rename and rewrite</button>
-        </form>
-      </details>
-
-      <div class="exhibit__secondary">
-        <a href="{% url 'museum:new' %}">Add another object</a>
-        <a class="link--danger" href="{% url 'museum:delete' exhibit.pk %}">Delete exhibit</a>
-      </div>
-    </section>
-  </div>
+      <button type="button" class="row row--icon row-action" data-open-dialog="rename-sheet">
+        <span class="row__glyph row__glyph--gray" aria-hidden="true"><svg class="icon"><use href="#i-pencil"></use></svg></span>
+        <span class="row__text">Wrong object? Rename it</span>
+      </button>
+      <a class="row row--icon row-action row-action--destructive" href="{% url 'museum:delete' exhibit.pk %}"
+         data-open-dialog="delete-alert">
+        <span class="row__glyph row__glyph--red" aria-hidden="true"><svg class="icon"><use href="#i-trash"></use></svg></span>
+        <span class="row__text">Delete exhibit</span>
+      </a>
+    </div>
+  </section>
 </article>
+
+<dialog class="sheet" id="rename-sheet" aria-labelledby="rename-title">
+  <form method="post" action="{% url 'museum:rename' exhibit.pk %}"
+        data-loading="Apologising to the object and starting over…">
+    {% csrf_token %}
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <div class="sheet__bar">
+      <button type="button" class="button button--plain" data-close-dialog>Cancel</button>
+      <h2 class="headline" id="rename-title">Rename object</h2>
+      <button type="submit" class="button button--plain">Rewrite</button>
+    </div>
+    <div class="sheet__body">
+      {% include "includes/form_group.html" with form=rename_form %}
+      <p class="group-footer">{{ exhibit.name }} gets a new story written for what it really is. The current story is replaced.</p>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="alert" id="delete-alert" aria-labelledby="delete-title" aria-describedby="delete-message">
+  <div class="alert__content">
+    <h2 class="headline" id="delete-title">Delete {{ exhibit.name }}?</h2>
+    <p class="footnote" id="delete-message">Its story and photo will be removed for good.</p>
+  </div>
+  <div class="alert__buttons">
+    <button type="button" class="alert__button" data-close-dialog autofocus>Cancel</button>
+    <form method="post" action="{% url 'museum:delete' exhibit.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="alert__button alert__button--destructive">Delete</button>
+    </form>
+  </div>
+</dialog>
 {% endblock %}

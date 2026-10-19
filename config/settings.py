@@ -19,8 +19,10 @@ import environ
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Secrets and per-machine settings live in .env (see .env.example).
+# overwrite=True: runserver's auto-reload starts each new process with the old
+# process's environment, so without it, edits to .env would be ignored until a full restart.
 env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env(BASE_DIR / '.env')
+environ.Env.read_env(BASE_DIR / '.env', overwrite=True)
 
 
 # Quick-start development settings - unsuitable for production

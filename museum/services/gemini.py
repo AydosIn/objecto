@@ -187,14 +187,15 @@ def _parse(response):
 def _to_result(biography, usage, prompt):
     def clip(name):
         # Never let a chatty model break a CharField limit.
-        value = getattr(biography, name).strip()
+        # The app's voice is lowercase; normalise once here rather than in every template.
+        value = getattr(biography, name).strip().lower()
         max_length = Exhibit._meta.get_field(name).max_length
         return value[:max_length] if max_length else value
 
     return BiographyResult(
         **{name: clip(name) for name in TEXT_FIELDS},
         rivals=[
-            {'name': rival.name.strip(), 'reason': rival.reason.strip()}
+            {'name': rival.name.strip().lower(), 'reason': rival.reason.strip().lower()}
             for rival in biography.rivals[:2]
         ],
         model_name=settings.GEMINI_MODEL,

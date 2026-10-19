@@ -13,11 +13,13 @@ LONG_TEXT = ('You are a very dramatic museum curator. ' * 5).strip()
 
 
 class SystemPromptModelTests(TestCase):
-    def test_migration_created_active_version_one_from_code(self):
-        first = SystemPrompt.objects.get()
-        self.assertTrue(first.is_active)
-        self.assertEqual(first.text, DEFAULT_SYSTEM_PROMPT)
-        self.assertEqual(SystemPrompt.active(), first)
+    def test_migrations_seed_the_original_and_activate_the_texting_voice(self):
+        original, voice = SystemPrompt.objects.order_by('pk')
+        self.assertEqual(original.label, 'Original (from code)')
+        self.assertIn('nature documentary narrator', original.text)
+        self.assertFalse(original.is_active)
+        self.assertEqual(voice.text, DEFAULT_SYSTEM_PROMPT)
+        self.assertEqual(SystemPrompt.active(), voice)
 
     def test_active_is_none_when_nothing_is_active(self):
         SystemPrompt.objects.update(is_active=False)
@@ -32,6 +34,8 @@ class SystemPromptAdminTests(TempMediaMixin, TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(email='curator@mail.com', password='s3cret-mug')
         self.client.force_login(self.admin)
+        # Start these tests from a single active version.
+        SystemPrompt.objects.filter(is_active=False).delete()
         self.v1 = SystemPrompt.objects.get()
 
     def change_url(self, prompt):
@@ -140,3 +144,27 @@ class SystemPromptAdminTests(TempMediaMixin, TestCase):
         make_exhibit(self.admin, prompt_version=self.v1)
         response = self.client.get(reverse('admin:museum_systemprompt_changelist'))
         self.assertContains(response, '<td class="field-exhibit_count">2</td>', html=True)
+
+
+class TextingVoiceMigrationTests(TestCase):
+    """The data migration's rule, run against the historical model state."""
+
+    def run_migration(self):
+        from importlib import import_module
+
+        from django.apps import apps
+
+        import_module('museum.migrations.0005_texting_voice_prompt').add_texting_voice(apps, None)
+
+    def test_a_version_chosen_in_the_admin_is_not_overridden(self):
+        SystemPrompt.objects.all().delete()
+        SystemPrompt.objects.create(label='Original (from code)', text=LONG_TEXT)
+        chosen = SystemPrompt.objects.create(label='My own', text=LONG_TEXT + ' Mine.', is_active=True)
+        self.run_migration()
+        self.assertEqual(SystemPrompt.active(), chosen)
+        self.assertTrue(SystemPrompt.objects.filter(label='Texting voice (redesign)', is_active=False).exists())
+
+    def test_running_twice_adds_nothing(self):
+        count = SystemPrompt.objects.count()
+        self.run_migration()
+        self.assertEqual(SystemPrompt.objects.count(), count)

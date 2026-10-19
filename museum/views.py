@@ -14,7 +14,7 @@ from django.views.generic.detail import SingleObjectMixin
 
 from .forms import ExhibitUploadForm, RenameForm
 from .models import Exhibit, GenerationLog
-from .services.aura import RAMP, aura_for, slide_fields
+from .services.aura import RAMP, aura_from_bytes, aura_of, slide_fields
 from .services.gemini import BiographyError, BiographyHints, generate_biography
 from .services.limits import limit_message, quota_context, remaining_today
 
@@ -80,7 +80,7 @@ class MuseumView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tiles'] = [(exhibit, aura_for(exhibit.image)) for exhibit in context['object_list']]
+        context['tiles'] = [(exhibit, aura_of(exhibit)) for exhibit in context['object_list']]
         return context
 
 
@@ -110,7 +110,9 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
             return self.form_invalid(form)
 
         with transaction.atomic():
-            exhibit = Exhibit(owner=user, **biography.as_model_fields())
+            exhibit = Exhibit(
+                owner=user, aura=aura_from_bytes(photo.content).slug, **biography.as_model_fields()
+            )
             # The stored file is the cleaned JPEG, never the original upload.
             exhibit.image.save('photo.jpg', ContentFile(photo.content), save=False)
             exhibit.save()
@@ -121,9 +123,9 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
 
 
 def recap_colours(exhibit):
-    """The exhibit's aura (sampled from its photo) and one ramp colour per recap slide."""
-    aura = aura_for(exhibit.image)
-    return {'aura': aura, 'fields': slide_fields(aura if aura in RAMP else RAMP[0], len(RAMP))}
+    """The exhibit's aura (from its photo) and one colour per recap slide."""
+    aura = aura_of(exhibit)
+    return {'aura': aura, 'fields': slide_fields(aura, len(RAMP))}
 
 
 class ExhibitDetailView(OwnedExhibitMixin, DetailView):
@@ -134,6 +136,8 @@ class ExhibitDetailView(OwnedExhibitMixin, DetailView):
         context['rename_form'] = RenameForm(initial={'object_type': self.object.object_type})
         context.update(recap_colours(self.object))
         context.update(quota_context(self.request.user))
+        # ?rename=1 opens the rename sheet from the server, for browsers without JavaScript.
+        context['rename_open'] = self.request.GET.get('rename') == '1'
         return context
 
 
@@ -185,7 +189,7 @@ class ExhibitRegenerateView(RewriteBiographyView):
         return self.rewrite(exhibit, exhibit.object_type)
 
     def success_message(self, exhibit):
-        return f'{exhibit.name} sat down for a second interview.'
+        return f'{exhibit.name.lower()} sat down for a second interview.'
 
 
 class ExhibitRenameView(RewriteBiographyView):
@@ -200,19 +204,16 @@ class ExhibitRenameView(RewriteBiographyView):
         return self.rewrite(exhibit, form.cleaned_data['object_type'])
 
     def success_message(self, exhibit):
-        return f'sorry, {exhibit.object_type}. your real story is up.'
+        return f'sorry, {exhibit.object_type.lower()}. your real story is up.'
 
 
 class ExhibitDeleteView(OwnedExhibitMixin, DeleteView):
     template_name = 'museum/exhibit_confirm_delete.html'
-
-    def get_context_data(self, **kwargs):
-        return {**super().get_context_data(**kwargs), **recap_colours(self.object)}
     success_url = reverse_lazy('museum:index')
 
     def form_valid(self, form):
         # The photo file is removed by the post_delete signal (museum/signals.py).
         name = self.object.name
         response = super().form_valid(form)
-        messages.success(self.request, f'{name} has left the museum.')
+        messages.success(self.request, f'{name.lower()} has left the museum.')
         return response

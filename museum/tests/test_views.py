@@ -199,7 +199,7 @@ class ExhibitRegenerateViewTests(ExhibitActionTestCase):
         self.assertEqual(self.exhibit.name, 'Fresh Gerald')
         self.assertEqual(self.exhibit.trauma, 'A brand new trauma.')
         self.assertEqual(self.exhibit.image.name, photo_name)
-        self.assertIn('Fresh Gerald sat down for a second interview.', self.follow_messages(response))
+        self.assertIn('fresh gerald sat down for a second interview.', self.follow_messages(response))
         log = GenerationLog.objects.get()
         self.assertEqual((log.kind, log.success), ('regenerate', True))
 
@@ -295,7 +295,7 @@ class ExhibitDeleteViewTests(ExhibitActionTestCase):
             response = self.client.post(self.url(), follow=True)
 
         self.assertRedirects(response, reverse('museum:index'))
-        self.assertIn('Old Name has left the museum.', self.follow_messages(response))
+        self.assertIn('old name has left the museum.', self.follow_messages(response))
         self.assertFalse(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
         self.assertFalse(storage.exists(photo_name))
 
@@ -332,3 +332,12 @@ class ExhibitDetailActionsTests(ExhibitActionTestCase):
             response, f'href="{reverse("museum:delete", args=[self.exhibit.pk])}"'
         )
         self.assertContains(response, 'delete old name?')
+
+
+class RenameWithoutJavaScriptTests(ExhibitActionTestCase):
+    def test_rename_link_opens_the_sheet_from_the_server(self):
+        self.client.force_login(self.owner)
+        url = self.exhibit.get_absolute_url()
+        self.assertContains(self.client.get(url), 'href="?rename=1#rename-sheet"')
+        self.assertNotContains(self.client.get(url), 'aria-labelledby="rename-title" open')
+        self.assertContains(self.client.get(url, {'rename': '1'}), 'aria-labelledby="rename-title" open')

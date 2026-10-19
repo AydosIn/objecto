@@ -22,7 +22,7 @@
         <span class="chip chip--soft"><span class="swatch" style="--sw: {{ aura.hex }}"></span>aura: {{ aura.name }}</span>
       </div>
       <figure class="print print--hero">
-        <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
+        <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}">
       </figure>
       <p class="hint" data-reveal style="--i:6"><svg class="icon" aria-hidden="true"><use href="#i-down"></use></svg>tap or scroll for the lore</p>
     </div>
@@ -80,7 +80,7 @@
 
   <section class="slide field--midnight" data-slide aria-labelledby="s-card">
     <div class="slide__inner wrap-up">
-      <h2 class="visually-hidden" id="s-card">{{ exhibit.name }}'s card</h2>
+      <h2 class="visually-hidden" id="s-card">{{ exhibit.name|lower }}'s card</h2>
       <article class="placard field--{{ fields.0.slug }}">
         <div class="placard__top">
           <img src="{{ exhibit.image.url }}" alt="">
@@ -109,11 +109,11 @@
             <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </button>
         </form>
-        <button type="button" class="row row-action" data-open-dialog="rename-sheet">
+        <a class="row row-action" href="?rename=1#rename-sheet" data-open-dialog="rename-sheet">
           <span class="glyph" style="--g:#ff6a13; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-pencil"></use></svg></span>
           wrong object? rename it
           <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
-        </button>
+        </a>
         <button type="button" class="row row-action" data-share hidden
                 data-share-text="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}: “{{ exhibit.placard|lower }}”">
           <span class="glyph" style="--g:#1fa2ff; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-share"></use></svg></span>
@@ -140,7 +140,7 @@
   </section>
 </div>
 
-<dialog class="sheet" id="rename-sheet" aria-labelledby="rename-title">
+<dialog class="sheet" id="rename-sheet" aria-labelledby="rename-title"{% if rename_open %} open{% endif %}>
   <div class="sheet__grabber" aria-hidden="true"></div>
   <form method="post" action="{% url 'museum:rename' exhibit.pk %}" class="sheet__body"
         data-loading="apologizing to it and starting over">
@@ -149,7 +149,7 @@
     <p class="sheet__text">{{ exhibit.name|lower }} gets a fresh story about what it actually is. this one gets replaced.</p>
     {% include "includes/form_group.html" with form=rename_form %}
     <button type="submit" class="btn btn--block">rewrite the story</button>
-    <button type="button" class="btn btn--ghost btn--block" data-close-dialog>never mind</button>
+    <a class="btn btn--ghost btn--block" href="{{ exhibit.get_absolute_url }}" data-close-dialog>never mind</a>
   </form>
 </dialog>
 
@@ -159,7 +159,7 @@
   <form method="post" action="{% url 'museum:delete' exhibit.pk %}">
     {% csrf_token %}
     <button type="submit" class="btn btn--danger btn--block">delete</button>
-    <button type="button" class="btn btn--ghost btn--block" data-close-dialog autofocus>keep it</button>
+    <a class="btn btn--ghost btn--block" href="{{ exhibit.get_absolute_url }}" data-close-dialog autofocus>keep it</a>
   </form>
 </dialog>
 {% endblock %}

@@ -15,9 +15,12 @@
     <div class="row field">
       <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
       {{ field }}
-      {% for error in field.errors %}
-        <p class="field__error">{{ error }}</p>
-      {% endfor %}
+      {% if field.errors %}
+        {# Django points the input's aria-describedby at this id #}
+        <div id="{{ field.auto_id }}_error">
+          {% for error in field.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
     </div>
   {% endfor %}
 </div>

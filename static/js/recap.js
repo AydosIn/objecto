@@ -92,9 +92,12 @@
     const slides = Array.from(stage.querySelectorAll('[data-slide]'));
     const pauseButton = stage.querySelector('[data-stage-pause]');
     let current = -1;
-    let paused = false;
     let userPaused = reduce; // no autoplay when motion is reduced
+    // Other reasons to hold still: 'hold' (finger down), 'hidden' (tab in the
+    // background), 'offscreen' (scrolled past). Autoplay runs only when none apply.
+    const holds = new Set();
     let timer = null;
+    let running = false;
     let remaining = SLIDE_MS;
     let startedAt = 0;
     let wipe = 0; // which wipe is the latest, so a fast tap doesn't recolour late
@@ -121,26 +124,25 @@
 
     const bars = buildProgress(stage.querySelector('[data-progress]'), slides, function (i) { go(i); });
 
-    function schedule() {
-      clearTimeout(timer);
-      if (paused || userPaused) return;
-      startedAt = performance.now();
-      timer = setTimeout(function () { go(current + 1); }, remaining);
+    // Start or stop the slide timer to match the current state. Time left is only
+    // measured when a running timer actually stops, so it can never go negative.
+    function sync() {
+      const shouldRun = !userPaused && holds.size === 0;
+      stage.style.setProperty('--play', shouldRun ? 'running' : 'paused');
+      if (shouldRun && !running) {
+        running = true;
+        startedAt = performance.now();
+        timer = setTimeout(function () { go(current + 1); }, Math.max(0, remaining));
+      } else if (!shouldRun && running) {
+        running = false;
+        clearTimeout(timer);
+        remaining = Math.max(0, remaining - (performance.now() - startedAt));
+      }
     }
 
-    function pause() {
-      if (paused) return;
-      paused = true;
-      clearTimeout(timer);
-      remaining -= performance.now() - startedAt;
-      stage.style.setProperty('--play', 'paused');
-    }
-
-    function resume() {
-      if (!paused || userPaused) return;
-      paused = false;
-      stage.style.setProperty('--play', 'running');
-      schedule();
+    function hold(reason, on) {
+      if (on) holds.add(reason); else holds.delete(reason);
+      sync();
     }
 
     function go(next, origin) {
@@ -173,17 +175,19 @@
         slide.animate(
           [{ clipPath: 'circle(0% at ' + at + ')' }, { clipPath: 'circle(150% at ' + at + ')' }],
           { duration: WIPE_MS, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
-        ).finished.then(function () { previous.classList.remove('is-leaving'); });
+        ).finished.then(function () {
+          if (thisWipe === wipe) previous.classList.remove('is-leaving');
+        });
 
         chrome.forEach(function (el) {
           setTimeout(function () {
-            if (thisWipe === wipe) setElementField(el, field);
+            if (thisWipe === wipe && !holds.has('offscreen')) setElementField(el, field);
           }, reachedAt(el, ox, oy));
         });
         // The glass bar (and the page behind it) goes last, at the top.
         const bar = document.querySelector('.app-bar');
         setTimeout(function () {
-          if (thisWipe !== wipe) return;
+          if (thisWipe !== wipe || holds.has('offscreen')) return;
           setPageField(field);
           chrome.forEach(function (el) { setElementField(el, null); });
         }, bar ? reachedAt(bar, ox, oy) : WIPE_MS / 2);
@@ -198,17 +202,18 @@
       bar.classList.remove('is-current');
       void bar.offsetWidth; // restart the fill
       bar.classList.add('is-current');
+      // Every slide starts with its full time.
+      clearTimeout(timer);
+      running = false;
       remaining = SLIDE_MS;
-      if (!paused) stage.style.setProperty('--play', userPaused ? 'paused' : 'running');
-      schedule();
+      sync();
     }
 
     function setUserPaused(value) {
       userPaused = value;
       pauseButton.setAttribute('aria-label', value ? 'play' : 'pause');
       pauseButton.querySelector('use').setAttribute('href', value ? '#i-play' : '#i-pause');
-      stage.style.setProperty('--play', value ? 'paused' : 'running');
-      if (value) { clearTimeout(timer); remaining = SLIDE_MS; } else { paused = false; schedule(); }
+      sync();
     }
 
     pauseButton.addEventListener('click', function (event) {
@@ -224,23 +229,28 @@
     let downY = 0;
     stage.addEventListener('pointerdown', function (event) {
       if (event.target.closest('a, button')) return;
+      // Keep receiving this pointer's events even if it's released elsewhere.
+      stage.setPointerCapture(event.pointerId);
       held = false;
       downX = event.clientX;
       downY = event.clientY;
-      holdTimer = setTimeout(function () { held = true; pause(); }, 220);
+      holdTimer = setTimeout(function () { held = true; hold('hold', true); }, 220);
     });
-    stage.addEventListener('pointercancel', function () { clearTimeout(holdTimer); resume(); });
+    stage.addEventListener('pointercancel', function () {
+      clearTimeout(holdTimer);
+      held = false;
+      hold('hold', false);
+    });
     stage.addEventListener('pointerup', function (event) {
       clearTimeout(holdTimer);
+      // A hold ends however it's released, before anything else is decided.
+      if (held) { held = false; hold('hold', false); return; }
       if (event.target.closest('a, button')) return;
       const dx = event.clientX - downX;
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(event.clientY - downY)) {
-        held = false;
-        resume();
         go(dx < 0 ? current + 1 : current - 1);
         return;
       }
-      if (held) { held = false; resume(); return; }
       const box = stage.getBoundingClientRect();
       const x = event.clientX - box.left;
       const y = event.clientY - box.top;
@@ -249,17 +259,18 @@
 
     // Stop when nobody is watching
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) pause(); else resume();
+      hold('hidden', document.hidden);
     });
     // Scrolled down past the example: pause it, and let the page take the
     // colour of what's on screen instead of the last slide's.
     const below = stage.nextElementSibling;
     new IntersectionObserver(function (entries) {
       if (entries[0].isIntersecting) {
+        hold('offscreen', false);
         if (current >= 0) setPageField(fieldOf(slides[current]));
-        resume();
       } else {
-        pause();
+        hold('offscreen', true);
+        chrome.forEach(function (el) { setElementField(el, null); });
         if (below && fieldOf(below)) setPageField(fieldOf(below));
       }
     }, { threshold: 0.4 }).observe(stage);

@@ -6,7 +6,7 @@
 
 {% block content %}
 <header class="page-head">
-  <figure class="print"><img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}"></figure>
+  <figure class="print"><img src="{{ exhibit.image.url }}" alt="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}"></figure>
   <h1 class="shout">delete {{ exhibit.name|lower }}?</h1>
   <p class="talk">{{ exhibit.title|lower }}, its whole story and its photo, gone for good. no undo.</p>
 </header>

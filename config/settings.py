@@ -150,6 +150,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 GEMINI_MODEL = env('GEMINI_MODEL', default='')
 
+# USD per 1M tokens, only used for the cost estimate on the admin analytics page.
+# Defaults: gemini-3.8-flash standard rates (Oct 2026, per pricing aggregators; check
+# Google's pricing page). Thinking tokens are billed at the output rate.
+GEMINI_PRICE_INPUT_PER_M = env.float('GEMINI_PRICE_INPUT_PER_M', default=0.75)
+GEMINI_PRICE_OUTPUT_PER_M = env.float('GEMINI_PRICE_OUTPUT_PER_M', default=3.75)
+
 # Tests must never call the real API: an unmocked call fails fast instead.
 if 'test' in sys.argv[1:2]:
     GEMINI_API_KEY = ''

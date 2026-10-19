@@ -1,0 +1,318 @@
+/* Admin analytics page. Text, borders and backgrounds reuse the admin's own
+   variables, so the page follows the admin's light/dark theme toggle.
+   Only the two series colors are ours (validated for contrast and colour blindness). */
+
+.analytics {
+  --series-ok: #2a78d6;
+  --series-failed: #d03b3b;
+  --ink: var(--body-fg);
+  --ink-quiet: var(--body-quiet-color);
+  --rule: var(--hairline-color);
+  --card: var(--body-bg);
+  max-width: 1200px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .analytics {
+    --series-ok: #3987e5;
+  }
+}
+
+:root[data-theme="dark"] .analytics {
+  --series-ok: #3987e5;
+}
+
+.analytics h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: none;
+  padding: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.analytics-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin-bottom: 16px;
+}
+
+.analytics-periods {
+  display: flex;
+  gap: 4px;
+}
+
+.analytics-periods a {
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.analytics-periods a[aria-current="true"] {
+  border-color: var(--ink);
+  font-weight: 600;
+}
+
+.analytics-note {
+  margin: 0 0 12px;
+  color: var(--ink-quiet);
+  font-size: 0.8125rem;
+}
+
+/* Six tiles: 2 × 3 on phones, 3 × 2 on laptops, one row on wide screens. */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  .kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1500px) {
+  .kpi-row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.kpi,
+.analytics-card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.kpi {
+  padding: 14px 16px;
+}
+
+.kpi p {
+  margin: 0;
+  padding: 0;
+}
+
+.kpi__label {
+  color: var(--ink-quiet);
+  font-size: 0.8125rem;
+}
+
+.kpi__value {
+  margin: 4px 0 2px !important;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.kpi__sub {
+  color: var(--ink-quiet);
+  font-size: 0.75rem;
+}
+
+.analytics-card {
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.analytics-empty {
+  text-align: center;
+  padding: 40px 16px;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.analytics table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.analytics th,
+.analytics td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.analytics thead th {
+  color: var(--ink-quiet);
+  font-weight: 600;
+  font-size: 0.75rem;
+  background: none;
+}
+
+.analytics .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.analytics .nowrap {
+  white-space: nowrap;
+}
+
+.analytics .reason {
+  word-break: break-word;
+}
+
+.analytics .quiet {
+  color: var(--ink-quiet);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  color: var(--ink-quiet);
+}
+
+/* Chart */
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-quiet);
+  font-size: 0.8125rem;
+}
+
+.chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+}
+
+.chart-legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.chart-legend__swatch--ok {
+  background: var(--series-ok);
+}
+
+.chart-legend__swatch--failed {
+  background: var(--series-failed);
+}
+
+.daily-chart {
+  position: relative;
+  height: 240px;
+}
+
+.daily-chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.daily-chart .grid {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.daily-chart .baseline {
+  stroke: var(--ink-quiet);
+  stroke-width: 1;
+}
+
+.daily-chart .tick {
+  fill: var(--ink-quiet);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-chart .seg-ok {
+  fill: var(--series-ok);
+}
+
+.daily-chart .seg-failed {
+  fill: var(--series-failed);
+}
+
+.daily-chart .hit {
+  fill: transparent;
+  cursor: default;
+  outline: none;
+}
+
+.daily-chart .column:hover .bar,
+.daily-chart .column:focus-within .bar {
+  opacity: 0.8;
+}
+
+.daily-chart .hit:focus-visible {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  min-width: 140px;
+  padding: 8px 10px;
+  border: 1px solid var(--hairline-color);
+  border-radius: 6px;
+  background: var(--body-bg);
+  color: var(--body-fg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  font-size: 0.8125rem;
+}
+
+.chart-tooltip__date {
+  margin-bottom: 4px;
+  color: var(--body-quiet-color);
+}
+
+.chart-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-tooltip__row strong {
+  min-width: 2ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-tooltip__key {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.chart-table {
+  margin-top: 12px;
+}
+
+.chart-table summary {
+  cursor: pointer;
+  color: var(--link-fg);
+  font-size: 0.8125rem;
+}

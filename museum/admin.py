@@ -6,6 +6,7 @@ from django.db.models import Count
 from django.utils.html import format_html
 
 from .models import Exhibit, GenerationLog, SystemPrompt
+from .templatetags.analytics_format import seconds
 
 
 class SystemPromptForm(forms.ModelForm):
@@ -203,9 +204,11 @@ class ExhibitAdmin(admin.ModelAdmin):
 class GenerationLogAdmin(admin.ModelAdmin):
     """Read-only: logs are written by the app, never by hand."""
 
-    list_display = ('created_at', 'user', 'kind', 'success', 'error')
-    list_filter = ('success', 'kind')
-    list_select_related = ('user',)
+    list_display = (
+        'created_at', 'user', 'kind', 'success', 'duration', 'tokens', 'prompt_version', 'error'
+    )
+    list_filter = ('success', 'kind', 'prompt_version', 'model_name')
+    list_select_related = ('user', 'prompt_version')
     search_fields = ('user__email', 'error')
     date_hierarchy = 'created_at'
 
@@ -214,3 +217,13 @@ class GenerationLogAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    @admin.display(description='Time', ordering='duration_ms')
+    def duration(self, obj):
+        return seconds(obj.duration_ms)
+
+    @admin.display(description='Tokens in / out')
+    def tokens(self, obj):
+        if not obj.input_tokens:
+            return '—'
+        return f'{obj.input_tokens:,} / {obj.billed_output_tokens:,}'

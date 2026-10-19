@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ exhibit.name }} · Object Biographies{% endblock %}
+
+{% block content %}
+<article class="exhibit">
+  <figure class="exhibit__photo">
+    <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
+  </figure>
+
+  <div class="exhibit__body">
+    <p class="eyebrow">{{ exhibit.object_type }} · Acquired {{ exhibit.created_at|date:"j M Y" }}</p>
+    <h1 class="exhibit__name">{{ exhibit.name }}</h1>
+    <p class="exhibit__title">{{ exhibit.title }}</p>
+    <p class="placard">{{ exhibit.placard }}</p>
+
+    <section class="bio-section">
+      <h2>Origin story</h2>
+      {{ exhibit.origin_story|linebreaks }}
+    </section>
+
+    <section class="bio-section">
+      <h2>Defining trauma</h2>
+      {{ exhibit.trauma|linebreaks }}
+    </section>
+
+    {% if exhibit.rivals %}
+      <section class="bio-section">
+        <h2>Rivals</h2>
+        <ul class="rivals">
+          {% for rival in exhibit.rivals %}
+            <li><strong>{{ rival.name }}</strong>: {{ rival.reason }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    <section class="bio-section">
+      <h2>Hopes &amp; fears</h2>
+      {{ exhibit.hopes_and_fears|linebreaks }}
+    </section>
+
+    <section class="bio-section bio-section--opinion">
+      <h2>Its opinion of you</h2>
+      {{ exhibit.opinion_of_owner|linebreaks }}
+    </section>
+
+    <p class="exhibit__actions">
+      <a class="btn btn--ghost" href="{% url 'museum:new' %}">Add another object</a>
+    </p>
+  </div>
+</article>
+{% endblock %}

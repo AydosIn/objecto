@@ -74,11 +74,11 @@ Landing page ──► Sign up / Log in ──► My Museum (grid)
 - FR-4: A profile page has an optional display name and an optional "about me" (max 300 chars) that goes into the prompt.
 
 ### 6.2 Photo capture and upload
-- FR-5: The upload form uses `<input type="file" accept="image/*" capture="environment">`, which opens the rear camera on phones and a file picker on desktop.
-- FR-6: Accepted formats: JPEG, PNG, WebP, HEIC if Pillow can read it. Max upload 10 MB.
+- FR-5: The upload form uses `<input type="file" accept="image/*">` with no `capture` attribute, so phones offer both "Take Photo" and "Photo Library", and desktops open a file picker. (`capture` would force the camera and hide the library.)
+- FR-6: Accepted formats: JPEG, PNG, WebP, HEIC (via `pillow-heif`). Max upload 10 MB. Every upload is stored as a re-encoded JPEG.
 - FR-7: The server validates that the file really is an image (Pillow `verify()`), not just that it has the right extension.
 - FR-8: Before storage and before sending to Gemini, the image is resized so its longest side is at most 1600 px, and EXIF data is stripped (it may contain GPS location).
-- FR-9: The client shows an image preview before submitting (vanilla JS `FileReader`).
+- FR-9: The client shows an image preview before submitting (vanilla JS `URL.createObjectURL`).
 
 ### 6.3 Object recognition and biography generation
 - FR-10: One Gemini multimodal call per biography. The image and prompt go in; structured JSON comes out (see §8).

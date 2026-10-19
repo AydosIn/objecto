@@ -6,5 +6,10 @@ class MuseumConfig(AppConfig):
     name = 'museum'
 
     def ready(self):
+        # Teach Pillow to open iPhone HEIC photos, everywhere in the app.
+        from pillow_heif import register_heif_opener
+
+        register_heif_opener()
+
         # Connects the post_delete handler that removes an exhibit's photo file.
         from . import signals  # noqa: F401

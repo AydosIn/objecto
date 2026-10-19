@@ -109,16 +109,21 @@
           </button>
         </form>
         <button type="button" class="row row-action" data-open-dialog="rename-sheet">
-          <span class="glyph" style="--g:#ff6a13" aria-hidden="true"><svg class="icon"><use href="#i-pencil"></use></svg></span>
+          <span class="glyph" style="--g:#ff6a13; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-pencil"></use></svg></span>
           wrong object? rename it
           <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
         </button>
         <button type="button" class="row row-action" data-share hidden
                 data-share-text="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}: “{{ exhibit.placard|lower }}”">
-          <span class="glyph" style="--g:#1fa2ff" aria-hidden="true"><svg class="icon"><use href="#i-share"></use></svg></span>
+          <span class="glyph" style="--g:#1fa2ff; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-share"></use></svg></span>
           share the card
           <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
         </button>
+        <a class="row row-action" href="{% url 'museum:index' %}">
+          <span class="glyph" style="--g:#ffd43b; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-grid"></use></svg></span>
+          back to your museum
+          <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+        </a>
         <a class="row row-action" href="{% url 'museum:new' %}">
           <span class="glyph" style="--g:#2be0a0; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-plus"></use></svg></span>
           add another object

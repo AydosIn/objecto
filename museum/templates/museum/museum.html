@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}your museum{% endblock %}
+{% block field %}midnight{% endblock %}
+
+{% block content %}
+{% if tiles %}
+  <header class="page-head museum-head">
+    <h1 class="shout">your museum.</h1>
+    <p class="talk">{{ paginator.count }} object{{ paginator.count|pluralize }} with opinions about you.</p>
+  </header>
+
+  <ul class="museum-grid">
+    {% if not page_obj.has_previous %}
+      <li class="tile-wrap" style="--i:0">
+        <a class="tile tile--add" href="{% url 'museum:new' %}">
+          <span class="tile__shutter" aria-hidden="true"><svg class="icon"><use href="#i-plus"></use></svg></span>
+          <span class="tile__name">add an object</span>
+        </a>
+      </li>
+    {% endif %}
+    {% for exhibit, aura in tiles %}
+      <li class="tile-wrap" style="--i:{{ forloop.counter }}">
+        <a class="tile field--{{ aura.slug }}" href="{{ exhibit.get_absolute_url }}">
+          <img class="tile__photo" src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}" loading="lazy">
+          <span class="tile__name">{{ exhibit.name|lower }}</span>
+          <span class="tile__line">{{ exhibit.placard|lower }}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% if page_obj.has_other_pages %}
+    <nav class="pager" aria-label="museum pages">
+      {% if page_obj.has_previous %}
+        <a class="btn btn--ghost" href="?page={{ page_obj.previous_page_number }}">newer</a>
+      {% endif %}
+      <span class="small">page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="btn btn--ghost" href="?page={{ page_obj.next_page_number }}">older</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <section class="museum-empty">
+    <h1 class="shout">it's quiet in here.</h1>
+    <p class="talk">your stuff is waiting to be heard. snap one thing and it'll tell you everything.</p>
+    <a class="btn" href="{% url 'museum:new' %}">add your first object</a>
+  </section>
+{% endif %}
+{% endblock %}

@@ -95,7 +95,7 @@ DATABASES = {
 AUTH_USER_MODEL = 'accounts.User'
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'profile'  # becomes the museum in Phase 7
+LOGIN_REDIRECT_URL = 'museum:index'
 LOGOUT_REDIRECT_URL = 'landing'
 
 # Password reset emails are printed in the runserver terminal in development.

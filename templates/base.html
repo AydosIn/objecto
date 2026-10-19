@@ -30,6 +30,7 @@
     <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></symbol>
     <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
     <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M8 7.5l4-4 4 4M7 11H6a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 18 11h-1"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h7M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5"/></symbol>
   </svg>
 
@@ -44,6 +45,9 @@
     </a>
     <nav class="app-bar__actions" aria-label="main">
       {% if user.is_authenticated %}
+        <a class="round round--quiet" href="{% url 'museum:index' %}" aria-label="your museum" title="your museum">
+          <svg class="icon" aria-hidden="true"><use href="#i-grid"></use></svg>
+        </a>
         <a class="round" href="{% url 'museum:new' %}" aria-label="add an object" title="add an object">
           <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
         </a>

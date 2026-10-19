@@ -49,7 +49,7 @@
         </a>
         <a class="round round--quiet" href="{% url 'profile' %}" aria-label="your profile" title="your profile">{{ user.profile.display_name|default:user.email|first }}</a>
       {% else %}
-        <a class="app-bar__link" href="{% url 'login' %}">log in</a>
+        {% block bar_login %}<a class="app-bar__link" href="{% url 'login' %}">log in</a>{% endblock %}
       {% endif %}
     </nav>
   </header>

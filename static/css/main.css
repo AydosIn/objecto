@@ -550,7 +550,7 @@ button {
   flex: none;
   border-radius: 10px;
   background: var(--g, #111);
-  color: #fff;
+  color: var(--gi, #fff); /* icon ink: dark on the light ramp colours */
 }
 
 .glyph .icon {
@@ -1171,6 +1171,10 @@ button {
   isolation: isolate;
 }
 
+.dock {
+  color: var(--ink);
+}
+
 .dock::before {
   content: "";
   position: absolute;
@@ -1189,6 +1193,8 @@ button {
 
 .dock .btn--ghost {
   flex: 0 0 auto;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--ink) 13%, transparent);
 }
 
 .how {

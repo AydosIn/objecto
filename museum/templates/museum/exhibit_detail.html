@@ -19,7 +19,6 @@
       <h1 class="shout" data-split>{{ exhibit.name|lower }}</h1>
       <p class="talk" data-reveal>{{ exhibit.title|lower }}</p>
       <div class="chips" data-reveal>
-        <span class="chip">{{ exhibit.object_type|lower }}</span>
         <span class="chip chip--soft"><span class="swatch" style="--sw: {{ aura.hex }}"></span>aura: {{ aura.name }}</span>
       </div>
       <figure class="print print--hero">
@@ -120,13 +119,17 @@
           share the card
           <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
         </button>
+        <a class="row row-action" href="{% url 'museum:new' %}">
+          <span class="glyph" style="--g:#2be0a0; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-plus"></use></svg></span>
+          add another object
+          <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+        </a>
         <a class="row row-action row-action--danger" href="{% url 'museum:delete' exhibit.pk %}" data-open-dialog="delete-alert">
           <span class="glyph" style="--g:#e5133a" aria-hidden="true"><svg class="icon"><use href="#i-trash"></use></svg></span>
           delete {{ exhibit.name|lower }}
         </a>
       </div>
 
-      <a class="btn" href="{% url 'museum:new' %}" data-reveal style="--i:8">add another object</a>
     </div>
   </section>
 </div>

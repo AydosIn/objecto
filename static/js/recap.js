@@ -54,6 +54,14 @@
     });
   }
 
+  // Give one element its own field (overriding the page's) until the page catches up.
+  function setElementField(el, field) {
+    Array.from(el.classList)
+      .filter(function (c) { return c.startsWith('field--'); })
+      .forEach(function (c) { el.classList.remove(c); });
+    if (field) el.classList.add(field);
+  }
+
   function buildProgress(nav, slides, pick) {
     slides.forEach(function (_, i) {
       const button = document.createElement('button');
@@ -90,7 +98,26 @@
     let remaining = SLIDE_MS;
     let startedAt = 0;
     let wipe = 0; // which wipe is the latest, so a fast tap doesn't recolour late
+    const WIPE_MS = 700;
+    // Chrome sitting on top of the slides: each one changes colour when the
+    // circle reaches it, so nothing switches before or after the wipe.
+    const chrome = [
+      stage.querySelector('[data-progress]'),
+      stage.querySelector('.story-head'),
+      document.querySelector('.dock'),
+    ].filter(Boolean);
     stage.style.setProperty('--slide-ms', SLIDE_MS + 'ms');
+
+    // When a circle growing from (ox, oy) to 150% reaches the middle of el, in ms.
+    // The wipe eases out like cubic-bezier(0.16, 1, 0.3, 1), close to 1 - (1 - t)^5.
+    function reachedAt(el, ox, oy) {
+      const box = stage.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const distance = Math.hypot(r.left + r.width / 2 - box.left - ox, r.top + r.height / 2 - box.top - oy);
+      const full = 1.5 * Math.hypot(box.width, box.height) / Math.SQRT2;
+      const progress = Math.min(1, distance / full);
+      return (1 - Math.pow(1 - progress, 1 / 5)) * WIPE_MS;
+    }
 
     const bars = buildProgress(stage.querySelector('[data-progress]'), slides, function (i) { go(i); });
 
@@ -133,22 +160,36 @@
       void slide.offsetWidth; // restart the entrance
       slide.classList.add('is-seen');
 
-      // A colour wipe from wherever you tapped. The bar, progress and dock take
-      // the new colour as the circle reaches them, not before.
+      // A colour wipe from wherever you tapped (default: lower right).
       const thisWipe = ++wipe;
+      const field = fieldOf(slide);
       if (previous && !reduce && slide.animate) {
         previous.classList.add('is-leaving');
         previous.classList.add('is-seen');
-        const at = origin || '85% 75%';
+        const box = stage.getBoundingClientRect();
+        const ox = origin ? origin.x : box.width * 0.85;
+        const oy = origin ? origin.y : box.height * 0.75;
+        const at = ox + 'px ' + oy + 'px';
         slide.animate(
           [{ clipPath: 'circle(0% at ' + at + ')' }, { clipPath: 'circle(150% at ' + at + ')' }],
-          { duration: 700, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
+          { duration: WIPE_MS, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
         ).finished.then(function () { previous.classList.remove('is-leaving'); });
+
+        chrome.forEach(function (el) {
+          setTimeout(function () {
+            if (thisWipe === wipe) setElementField(el, field);
+          }, reachedAt(el, ox, oy));
+        });
+        // The glass bar (and the page behind it) goes last, at the top.
+        const bar = document.querySelector('.app-bar');
         setTimeout(function () {
-          if (thisWipe === wipe) setPageField(fieldOf(slide));
-        }, 380);
+          if (thisWipe !== wipe) return;
+          setPageField(field);
+          chrome.forEach(function (el) { setElementField(el, null); });
+        }, bar ? reachedAt(bar, ox, oy) : WIPE_MS / 2);
       } else {
-        setPageField(fieldOf(slide));
+        setPageField(field);
+        chrome.forEach(function (el) { setElementField(el, null); });
       }
       countUp(slide);
       current = next;
@@ -203,7 +244,7 @@
       const box = stage.getBoundingClientRect();
       const x = event.clientX - box.left;
       const y = event.clientY - box.top;
-      go(x < box.width * 0.3 ? current - 1 : current + 1, x + 'px ' + y + 'px');
+      go(x < box.width * 0.3 ? current - 1 : current + 1, { x: x, y: y });
     });
 
     // Stop when nobody is watching

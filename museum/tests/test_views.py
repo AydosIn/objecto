@@ -294,7 +294,7 @@ class ExhibitDeleteViewTests(ExhibitActionTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             response = self.client.post(self.url(), follow=True)
 
-        self.assertRedirects(response, reverse('landing'))
+        self.assertRedirects(response, reverse('museum:index'))
         self.assertIn('Old Name has left the museum.', self.follow_messages(response))
         self.assertFalse(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
         self.assertFalse(storage.exists(photo_name))

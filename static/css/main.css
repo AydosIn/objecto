@@ -45,7 +45,7 @@
 
 /* The ramp. Each field brings its own ink; never set one without the other. */
 .field--grape    { --field: #5b2bff; --ink: #ffffff; --ink-2: rgba(255, 255, 255, 0.84); }
-.field--pink     { --field: #ff2e7e; --ink: #111111; --ink-2: rgba(17, 17, 17, 0.8); }
+.field--pink     { --field: #ff2e7e; --ink: #111111; --ink-2: rgba(17, 17, 17, 0.88); }
 .field--lime     { --field: #c8f031; --ink: #111111; --ink-2: rgba(17, 17, 17, 0.76); }
 .field--orange   { --field: #ff6a13; --ink: #111111; --ink-2: rgba(17, 17, 17, 0.8); }
 .field--pool     { --field: #1fa2ff; --ink: #111111; --ink-2: rgba(17, 17, 17, 0.8); }
@@ -537,6 +537,12 @@ button {
   color: var(--danger);
 }
 
+/* Cards clip their overflow, so the focus ring goes inside the row */
+.row-action:focus-visible {
+  outline-offset: -4px;
+  border-radius: 14px;
+}
+
 .row-action__chevron {
   margin-left: auto;
   opacity: 0.35;
@@ -729,7 +735,7 @@ button {
 }
 
 .progress button.is-current::after {
-  animation: fill var(--slide-ms, 4200ms) linear forwards;
+  animation: fill var(--slide-ms, 4600ms) linear forwards;
   animation-play-state: var(--play, running);
 }
 
@@ -1656,5 +1662,150 @@ dialog::backdrop {
 
   .js .slide.is-seen .thread .typing {
     display: none;
+  }
+}
+
+/* ------------------------------------------------------------ Museum: your camera roll of recaps */
+
+/* Same column as the glass bar above it */
+.museum-head,
+.museum-grid,
+.pager {
+  max-width: var(--column);
+  margin-inline: auto;
+}
+
+.museum-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tile-wrap {
+  animation: tile-in 0.6s var(--spring) both;
+  animation-delay: calc(min(var(--i, 0), 12) * 45ms);
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.92);
+  }
+}
+
+/* Each exhibit is a little card in its own aura, stuck on slightly crooked */
+.tile {
+  display: grid;
+  gap: 8px;
+  height: 100%;
+  padding: 8px 8px 14px;
+  border-radius: 24px;
+  background: var(--field);
+  color: var(--ink);
+  text-decoration: none;
+  transform: rotate(-1.2deg);
+  transition: transform 0.45s var(--spring);
+}
+
+.tile-wrap:nth-child(even) .tile {
+  transform: rotate(1.2deg);
+}
+
+.tile:hover,
+.tile:focus-visible {
+  transform: rotate(0deg) scale(1.03);
+}
+
+.tile:active {
+  transform: scale(0.96);
+  transition-duration: 0.1s;
+}
+
+.tile__photo {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.tile__name {
+  padding: 0 6px;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+
+.tile__line {
+  display: -webkit-box;
+  padding: 0 6px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.tile--add {
+  place-content: center;
+  justify-items: center;
+  min-height: 200px;
+  background: transparent;
+  box-shadow: inset 0 0 0 2.5px color-mix(in srgb, var(--ink) 30%, transparent);
+  text-align: center;
+}
+
+.tile__shutter {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 4px solid var(--ink);
+  border-radius: 50%;
+}
+
+.tile__shutter .icon {
+  width: 30px;
+  height: 30px;
+  stroke-width: 2.6;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 36px;
+}
+
+.museum-empty {
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+  max-width: 560px;
+  min-height: 60svh;
+  align-content: center;
+}
+
+@media (min-width: 720px) {
+  .museum-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+}
+
+@media (min-width: 1040px) {
+  .museum-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile-wrap:nth-child(even) .tile {
+    transform: none;
   }
 }

@@ -5,6 +5,7 @@ from . import views
 app_name = 'museum'
 
 urlpatterns = [
+    path('', views.MuseumView.as_view(), name='index'),
     path('new/', views.ExhibitCreateView.as_view(), name='new'),
     path('<int:pk>/', views.ExhibitDetailView.as_view(), name='detail'),
     path('<int:pk>/regenerate/', views.ExhibitRegenerateView.as_view(), name='regenerate'),

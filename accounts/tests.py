@@ -50,7 +50,7 @@ class SignupTests(TestCase):
 
     def test_signup_creates_user_and_logs_in(self):
         response = self.post(email='New.Visitor@Mail.com')
-        self.assertRedirects(response, reverse('profile'))
+        self.assertRedirects(response, reverse('museum:index'))
         user = User.objects.get(email='new.visitor@mail.com')
         self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
         self.assertTrue(Profile.objects.filter(user=user).exists())
@@ -70,7 +70,7 @@ class SignupTests(TestCase):
     def test_logged_in_user_is_redirected_away(self):
         user = User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
         self.client.force_login(user)
-        self.assertRedirects(self.client.get(self.url), reverse('profile'))
+        self.assertRedirects(self.client.get(self.url), reverse('museum:index'))
 
 
 class LoginLogoutTests(TestCase):
@@ -81,7 +81,7 @@ class LoginLogoutTests(TestCase):
         response = self.client.post(
             reverse('login'), {'username': 'Gerald@mail.com', 'password': PASSWORD}
         )
-        self.assertRedirects(response, reverse('profile'))
+        self.assertRedirects(response, reverse('museum:index'))
 
     def test_wrong_password_shows_error(self):
         response = self.client.post(
@@ -202,9 +202,8 @@ class LandingPageTests(TestCase):
         self.assertContains(response, 'this is gerald.')
         self.assertContains(response, reverse('signup'))
 
-    def test_logged_in_user_sees_add_object(self):
+    def test_logged_in_user_goes_to_their_museum(self):
         user = User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
         self.client.force_login(user)
         response = self.client.get(reverse('landing'))
-        self.assertContains(response, reverse('museum:new'))
-        self.assertNotContains(response, f'href="{reverse("signup")}"')
+        self.assertRedirects(response, reverse('museum:index'))

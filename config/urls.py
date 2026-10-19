@@ -2,12 +2,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from django.views.generic import TemplateView
 
 from museum.admin_views import AnalyticsView
+from museum.views import LandingView
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='landing.html'), name='landing'),
+    path('', LandingView.as_view(), name='landing'),
     path('accounts/', include('accounts.urls')),
     path('museum/', include('museum.urls')),
     # Before admin.site.urls, which would otherwise swallow this path.

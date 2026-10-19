@@ -9,7 +9,7 @@ from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import DeleteView, DetailView, FormView
+from django.views.generic import DeleteView, DetailView, FormView, ListView, TemplateView
 from django.views.generic.detail import SingleObjectMixin
 
 from .forms import ExhibitUploadForm, RenameForm
@@ -55,6 +55,32 @@ class OwnedExhibitMixin(LoginRequiredMixin):
 
     def get_queryset(self):
         return Exhibit.objects.filter(owner=self.request.user)
+
+
+class LandingView(TemplateView):
+    """The public front page. Logged-in visitors go straight to their museum."""
+
+    template_name = 'landing.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('museum:index')
+        return super().dispatch(request, *args, **kwargs)
+
+
+class MuseumView(LoginRequiredMixin, ListView):
+    """Your exhibits, newest first, as tiles in each one's aura colour."""
+
+    template_name = 'museum/museum.html'
+    paginate_by = 24
+
+    def get_queryset(self):
+        return Exhibit.objects.filter(owner=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tiles'] = [(exhibit, aura_for(exhibit.image)) for exhibit in context['object_list']]
+        return context
 
 
 class ExhibitCreateView(LoginRequiredMixin, FormView):
@@ -169,7 +195,7 @@ class ExhibitDeleteView(OwnedExhibitMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         return {**super().get_context_data(**kwargs), **recap_colours(self.object)}
-    success_url = reverse_lazy('landing')  # becomes the museum grid in Phase 7
+    success_url = reverse_lazy('museum:index')
 
     def form_valid(self, form):
         # The photo file is removed by the post_delete signal (museum/signals.py).

@@ -105,6 +105,7 @@
           <button type="submit" class="row row-action">
             <span class="glyph" style="--g:#5b2bff" aria-hidden="true"><svg class="icon"><use href="#i-refresh"></use></svg></span>
             reroll the story
+            {% if remaining is not None %}<span class="row-action__meta">{% if remaining %}{{ remaining }} left today{% else %}back tomorrow{% endif %}</span>{% endif %}
             <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </button>
         </form>

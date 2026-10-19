@@ -38,6 +38,22 @@
     document.body.classList.add(field);
   }
 
+  // "refilled 1,400 times": numbers count up when their slide lands.
+  function countUp(slide) {
+    slide.querySelectorAll('[data-count]').forEach(function (el) {
+      const target = Number(el.dataset.count);
+      if (reduce || !target) return;
+      const started = performance.now();
+      function frame(now) {
+        const t = Math.min(1, (now - started) / 1100);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(target * eased).toLocaleString('en-US');
+        if (t < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
   function buildProgress(nav, slides, pick) {
     slides.forEach(function (_, i) {
       const button = document.createElement('button');
@@ -73,6 +89,7 @@
     let timer = null;
     let remaining = SLIDE_MS;
     let startedAt = 0;
+    let wipe = 0; // which wipe is the latest, so a fast tap doesn't recolour late
     stage.style.setProperty('--slide-ms', SLIDE_MS + 'ms');
 
     const bars = buildProgress(stage.querySelector('[data-progress]'), slides, function (i) { go(i); });
@@ -116,7 +133,9 @@
       void slide.offsetWidth; // restart the entrance
       slide.classList.add('is-seen');
 
-      // A colour wipe from wherever you tapped
+      // A colour wipe from wherever you tapped. The bar, progress and dock take
+      // the new colour as the circle reaches them, not before.
+      const thisWipe = ++wipe;
       if (previous && !reduce && slide.animate) {
         previous.classList.add('is-leaving');
         previous.classList.add('is-seen');
@@ -125,9 +144,13 @@
           [{ clipPath: 'circle(0% at ' + at + ')' }, { clipPath: 'circle(150% at ' + at + ')' }],
           { duration: 700, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
         ).finished.then(function () { previous.classList.remove('is-leaving'); });
+        setTimeout(function () {
+          if (thisWipe === wipe) setPageField(fieldOf(slide));
+        }, 380);
+      } else {
+        setPageField(fieldOf(slide));
       }
-
-      setPageField(fieldOf(slide));
+      countUp(slide);
       current = next;
       markProgress(bars, current);
       const bar = bars[current];
@@ -152,18 +175,30 @@
       setUserPaused(!userPaused);
     });
 
-    // Tap the right side for next, the left side for back; hold to pause.
+    // Tap the right side for next, the left side for back, swipe sideways,
+    // or hold to pause.
     let holdTimer = null;
     let held = false;
+    let downX = 0;
+    let downY = 0;
     stage.addEventListener('pointerdown', function (event) {
       if (event.target.closest('a, button')) return;
       held = false;
+      downX = event.clientX;
+      downY = event.clientY;
       holdTimer = setTimeout(function () { held = true; pause(); }, 220);
     });
     stage.addEventListener('pointercancel', function () { clearTimeout(holdTimer); resume(); });
     stage.addEventListener('pointerup', function (event) {
       clearTimeout(holdTimer);
       if (event.target.closest('a, button')) return;
+      const dx = event.clientX - downX;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(event.clientY - downY)) {
+        held = false;
+        resume();
+        go(dx < 0 ? current + 1 : current - 1);
+        return;
+      }
       if (held) { held = false; resume(); return; }
       const box = stage.getBoundingClientRect();
       const x = event.clientX - box.left;
@@ -211,6 +246,16 @@
       });
     }, { rootMargin: '-45% 0px -45% 0px' });
     slides.forEach(function (slide) { observer.observe(slide); });
+
+    // Share the end card where the phone can share (the page itself is private,
+    // so it shares the words, not a link).
+    const share = recap.querySelector('[data-share]');
+    if (share && navigator.share) {
+      share.hidden = false;
+      share.addEventListener('click', function () {
+        navigator.share({ title: 'object biographies', text: share.dataset.shareText }).catch(function () {});
+      });
+    }
 
     // Tapping a slide (not a control, not while selecting text) moves to the next one.
     recap.addEventListener('click', function (event) {

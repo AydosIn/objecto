@@ -7,13 +7,16 @@
 {% static 'img/example-mug.jpg' as mug %}
 <section class="stage" data-stage aria-roledescription="carousel" aria-label="an example recap: gerald the mug">
   <nav class="progress" aria-label="example slides" data-progress></nav>
-  <button type="button" class="round round--quiet stage__pause" data-stage-pause aria-label="pause">
-    <svg class="icon" aria-hidden="true"><use href="#i-pause"></use></svg>
-  </button>
+  <div class="story-head">
+    <img src="{{ mug }}" alt="">
+    <span>gerald <span class="story-head__note">example</span></span>
+    <button type="button" class="round round--quiet stage__pause" data-stage-pause aria-label="pause">
+      <svg class="icon" aria-hidden="true"><use href="#i-pause"></use></svg>
+    </button>
+  </div>
 
   <article class="slide field--grape" data-slide aria-roledescription="slide">
     <div class="slide__inner slide__inner--split">
-      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
       <h1 class="shout" data-split>this is gerald.</h1>
       <p class="talk" data-reveal>a plain white mug with a thin blue rim. he has a lot to say about you.</p>
       <figure class="print"><img src="{{ mug }}" alt="a white mug with a thin blue rim on a wooden table"></figure>
@@ -22,16 +25,14 @@
 
   <article class="slide field--pink" data-slide aria-roledescription="slide">
     <div class="slide__inner">
-      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
-      <h2 class="shout" data-split>refilled 1,400 times.</h2>
+      <h2 class="shout">refilled <span class="count" data-count="1400">1,400</span> times.</h2>
       <p class="talk" data-reveal>and that brown line inside his rim? nobody ever scrubbed it. he knows you saw it.</p>
     </div>
   </article>
 
   <article class="slide field--lime" data-slide aria-roledescription="slide">
     <div class="slide__inner">
-      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
-      <h2 class="say" data-split>the beef</h2>
+      <h2 class="say">the beef</h2>
       <ul class="rivals">
         <li class="rival" style="--i:3">
           <p class="rival__name say"><span class="vs">vs</span>the dishwasher</p>
@@ -47,8 +48,7 @@
 
   <article class="slide field--orange" data-slide aria-roledescription="slide">
     <div class="slide__inner">
-      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
-      <h2 class="say" data-split>what he thinks of you</h2>
+      <h2 class="say">what he thinks of you</h2>
       <div class="thread">
         <p class="thread__from" data-reveal><img src="{{ mug }}" alt="">gerald</p>
         <div class="thread__stack">
@@ -61,7 +61,7 @@
 
   <article class="slide field--midnight" data-slide aria-roledescription="slide">
     <div class="slide__inner">
-      <h2 class="shout" data-split>your stuff has opinions too.</h2>
+      <h2 class="shout" data-reveal>your stuff has opinions too.</h2>
       <p class="talk" data-reveal>snap anything in your house. it tells you its life story in about ten seconds.</p>
     </div>
   </article>
@@ -90,6 +90,7 @@
     <a class="btn" href="{% url 'museum:new' %}">add an object</a>
   {% else %}
     <a class="btn" href="{% url 'signup' %}">make your stuff talk</a>
+    <a class="btn btn--ghost" href="{% url 'login' %}">log in</a>
   {% endif %}
 </div>
 {% endblock %}

@@ -20,6 +20,7 @@
   --danger-fill: #e5133a;  /* red buttons: white text needs the deeper red in both modes */
 
   --gutter: 20px;
+  --column: 900px; /* bar, progress, header and slides share one width */
   --bar-top: calc(env(safe-area-inset-top) + 10px);
 }
 
@@ -160,7 +161,7 @@ button {
 
 /* The voice of the recap: giant, heavy, lowercase. */
 .shout {
-  font-size: clamp(3rem, 13.5vw, 6rem);
+  font-size: clamp(3.5rem, 21vw, 6rem);
   line-height: 0.92;
   font-weight: 900;
   letter-spacing: -0.04em;
@@ -168,7 +169,7 @@ button {
 }
 
 .say {
-  font-size: clamp(2.1rem, 8.4vw, 4rem);
+  font-size: clamp(2.4rem, 12vw, 4rem);
   line-height: 0.98;
   font-weight: 800;
   letter-spacing: -0.035em;
@@ -207,7 +208,7 @@ button {
   justify-content: space-between;
   gap: 10px;
   width: calc(100% - 2 * 12px);
-  max-width: 1100px;
+  max-width: calc(var(--column) + 24px);
   height: 52px;
   padding: 0 7px 0 14px;
   transform: translateX(-50%);
@@ -626,7 +627,7 @@ button {
   flex-direction: column;
   justify-content: center;
   min-height: 100svh;
-  padding: calc(var(--bar-top) + 104px) var(--gutter) 64px;
+  padding: calc(var(--bar-top) + 132px) var(--gutter) 64px;
   overflow: hidden;
   background: var(--field);
   color: var(--ink);
@@ -637,28 +638,46 @@ button {
   display: grid;
   gap: 22px;
   width: 100%;
-  max-width: 900px;
+  max-width: var(--column);
   margin: 0 auto;
 }
 
-/* "Whose story is this": rides on every slide, so any screenshot still says. */
-.ticket {
-  display: inline-flex;
+/* Whose story this is: one header row under the progress, like Stories.
+   It stays on screen, so any screenshot still says whose story it is. */
+.story-head {
+  position: absolute;
+  top: calc(var(--bar-top) + 78px);
+  left: 50%;
+  z-index: 36;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  justify-self: start;
-  padding: 4px 14px 4px 4px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 13%, transparent);
-  font-weight: 700;
-  font-size: 15px;
+  gap: 10px;
+  width: calc(100% - 2 * var(--gutter));
+  max-width: var(--column);
+  min-height: 38px;
+  transform: translateX(-50%);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 16px;
+  transition: color 0.3s var(--out);
 }
 
-.ticket img {
-  width: 30px;
-  height: 30px;
+.story-head--fixed {
+  position: fixed;
+}
+
+.story-head img {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.story-head__note {
+  margin-left: 4px;
+  font-weight: 600;
+  color: var(--ink-2);
 }
 
 .progress {
@@ -669,7 +688,7 @@ button {
   display: flex;
   gap: 4px;
   width: calc(100% - 2 * var(--gutter));
-  max-width: 900px;
+  max-width: var(--column);
   transform: translateX(-50%);
 }
 
@@ -692,6 +711,7 @@ button {
   left: 0;
   height: 4px;
   border-radius: 2px;
+  transition: background-color 0.3s var(--out);
 }
 
 .progress button::before {
@@ -777,7 +797,7 @@ button {
   height: 14px;
   border-radius: 50%;
   background: var(--sw);
-  box-shadow: 0 0 0 2px var(--field);
+  box-shadow: 0 0 0 2px var(--ink);
 }
 
 /* The beef */
@@ -795,6 +815,10 @@ button {
   display: flex;
   align-items: baseline;
   gap: 12px;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
 }
 
 .vs {
@@ -1004,7 +1028,23 @@ button {
 
 .js .slide .rival {
   opacity: 0;
-  transform: translateX(60px) rotate(3deg);
+  transform: translateX(70px) rotate(3deg);
+}
+
+.js .slide .rival:nth-child(even) {
+  transform: translateX(-70px) rotate(-3deg);
+}
+
+.js .slide .rival .vs {
+  opacity: 0;
+  transform: scale(2.4) rotate(-24deg);
+}
+
+.js .slide.is-seen .rival .vs {
+  opacity: 1;
+  transform: rotate(-6deg);
+  transition: transform 0.5s var(--spring), opacity 0.15s;
+  transition-delay: calc(var(--i, 0) * 60ms + 220ms);
 }
 
 .js .slide .print {
@@ -1074,8 +1114,11 @@ button {
 
 /* ------------------------------------------------------------ Landing: the autoplaying example recap */
 
-.js .stage {
+.stage {
   position: relative;
+}
+
+.js .stage {
   height: 100svh;
   overflow: hidden;
   touch-action: pan-y;
@@ -1103,11 +1146,8 @@ button {
 }
 
 .stage__pause {
-  position: absolute;
-  top: calc(var(--bar-top) + 86px);
-  right: var(--gutter);
-  z-index: 36;
   display: none;
+  margin-left: auto;
 }
 
 .js .stage__pause {
@@ -1128,8 +1168,18 @@ button {
   justify-content: center;
   gap: 10px;
   padding: 16px var(--gutter) calc(env(safe-area-inset-bottom) + 18px);
-  background: linear-gradient(to top, color-mix(in srgb, var(--field) 92%, transparent) 55%, transparent);
-  transition: background 0.5s var(--out);
+  isolation: isolate;
+}
+
+.dock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--field);
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent);
+  mask-image: linear-gradient(to top, #000 55%, transparent);
+  transition: background-color 0.5s var(--out);
 }
 
 .dock .btn {
@@ -1454,14 +1504,21 @@ dialog::backdrop {
 }
 
 .alert[open] {
-  animation: alert-in 0.45s var(--spring);
+  animation: alert-in 0.3s var(--out);
 }
 
 @keyframes alert-in {
   from {
     opacity: 0;
-    transform: scale(0.8);
+    transform: scale(1.08);
   }
+}
+
+.sheet .btn--ghost,
+.alert .btn--ghost {
+  box-shadow: none;
+  background: color-mix(in srgb, var(--card-ink) 9%, transparent);
+  color: var(--card-ink);
 }
 
 .alert__title {
@@ -1489,7 +1546,7 @@ dialog::backdrop {
   }
 
   .sheet[open] {
-    animation: alert-in 0.45s var(--spring);
+    animation: alert-in 0.3s var(--out);
   }
 
   .sheet__grabber {
@@ -1586,6 +1643,7 @@ dialog::backdrop {
   .js .slide .rival,
   .js .slide .print,
   .js .slide .placard,
+  .js .slide .rival .vs,
   .js .thread .bubble {
     transform: none !important;
   }

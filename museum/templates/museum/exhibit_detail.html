@@ -9,15 +9,19 @@
 {% block content %}
 <div class="recap" data-recap>
   <nav class="progress progress--static" aria-label="{{ exhibit.name|lower }}'s story" data-progress></nav>
+  <div class="story-head story-head--fixed">
+    <img src="{{ exhibit.image.url }}" alt="">
+    <span>{{ exhibit.name|lower }} <span class="story-head__note">{{ exhibit.object_type|lower }}</span></span>
+  </div>
 
   <section class="slide field--{{ fields.0.slug }}" data-slide aria-label="meet {{ exhibit.name|lower }}">
     <div class="slide__inner slide__inner--split">
+      <h1 class="shout" data-split>{{ exhibit.name|lower }}</h1>
+      <p class="talk" data-reveal>{{ exhibit.title|lower }}</p>
       <div class="chips" data-reveal>
         <span class="chip">{{ exhibit.object_type|lower }}</span>
         <span class="chip chip--soft"><span class="swatch" style="--sw: {{ aura.hex }}"></span>aura: {{ aura.name }}</span>
       </div>
-      <h1 class="shout" data-split>{{ exhibit.name|lower }}</h1>
-      <p class="talk" data-reveal>{{ exhibit.title|lower }}</p>
       <figure class="print print--hero">
         <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
       </figure>
@@ -27,30 +31,27 @@
 
   <section class="slide field--{{ fields.1.slug }}" data-slide aria-labelledby="s-origin">
     <div class="slide__inner">
-      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
-      <h2 class="say" id="s-origin" data-split>where it came from</h2>
-      <div class="talk" data-reveal style="--i:4">{{ exhibit.origin_story|linebreaks }}</div>
+      <h2 class="say" id="s-origin" >where it came from</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.origin_story|lower|linebreaks }}</div>
     </div>
   </section>
 
   <section class="slide field--{{ fields.2.slug }}" data-slide aria-labelledby="s-trauma">
     <div class="slide__inner">
-      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
-      <h2 class="say" id="s-trauma" data-split>the trauma</h2>
-      <div class="talk" data-reveal style="--i:4">{{ exhibit.trauma|linebreaks }}</div>
+      <h2 class="say" id="s-trauma" >the trauma</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.trauma|lower|linebreaks }}</div>
     </div>
   </section>
 
   {% if exhibit.rivals %}
     <section class="slide field--{{ fields.3.slug }}" data-slide aria-labelledby="s-beef">
       <div class="slide__inner">
-        <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
-        <h2 class="say" id="s-beef" data-split>the beef</h2>
+        <h2 class="say" id="s-beef" >the beef</h2>
         <ul class="rivals">
           {% for rival in exhibit.rivals %}
             <li class="rival" style="--i:{{ forloop.counter|add:forloop.counter|add:1 }}">
               <p class="rival__name say"><span class="vs">vs</span>{{ rival.name|lower }}</p>
-              <p class="talk">{{ rival.reason }}</p>
+              <p class="talk">{{ rival.reason|lower }}</p>
             </li>
           {% endfor %}
         </ul>
@@ -60,21 +61,19 @@
 
   <section class="slide field--{{ fields.4.slug }}" data-slide aria-labelledby="s-hopes">
     <div class="slide__inner">
-      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
-      <h2 class="say" id="s-hopes" data-split>hopes and fears</h2>
-      <div class="talk" data-reveal style="--i:4">{{ exhibit.hopes_and_fears|linebreaks }}</div>
+      <h2 class="say" id="s-hopes" >hopes and fears</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.hopes_and_fears|lower|linebreaks }}</div>
     </div>
   </section>
 
   <section class="slide field--{{ fields.5.slug }}" data-slide aria-labelledby="s-opinion">
     <div class="slide__inner">
-      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
-      <h2 class="say" id="s-opinion" data-split>what it thinks of you</h2>
+      <h2 class="say" id="s-opinion" >what it thinks of you</h2>
       <div class="thread">
         <p class="thread__from" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
         <div class="thread__stack">
           <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="bubble">{{ exhibit.opinion_of_owner|linebreaks }}</div>
+          <div class="bubble">{{ exhibit.opinion_of_owner|lower|linebreaks }}</div>
         </div>
       </div>
     </div>
@@ -91,7 +90,7 @@
             <p class="small">{{ exhibit.title|lower }}</p>
           </div>
         </div>
-        <blockquote class="placard__quote">{{ exhibit.placard }}</blockquote>
+        <blockquote class="placard__quote">{{ exhibit.placard|lower }}</blockquote>
         <dl class="facts">
           <div><dt>it's a</dt><dd>{{ exhibit.object_type|lower }}</dd></div>
           <div><dt>aura</dt><dd>{{ aura.name }}</dd></div>
@@ -113,6 +112,12 @@
         <button type="button" class="row row-action" data-open-dialog="rename-sheet">
           <span class="glyph" style="--g:#ff6a13" aria-hidden="true"><svg class="icon"><use href="#i-pencil"></use></svg></span>
           wrong object? rename it
+          <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+        </button>
+        <button type="button" class="row row-action" data-share hidden
+                data-share-text="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}: “{{ exhibit.placard|lower }}”">
+          <span class="glyph" style="--g:#1fa2ff" aria-hidden="true"><svg class="icon"><use href="#i-share"></use></svg></span>
+          share the card
           <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
         </button>
         <a class="row row-action row-action--danger" href="{% url 'museum:delete' exhibit.pk %}" data-open-dialog="delete-alert">

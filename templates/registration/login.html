@@ -1,26 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Log in · Object Biographies{% endblock %}
+{% block title %}log in{% endblock %}
+{% block field %}grape{% endblock %}
 {% block page_class %}page--narrow{% endblock %}
 
 {% block content %}
-<header class="page-header page-header--center">
-  <span class="app-icon app-icon--large" aria-hidden="true"><svg class="icon"><use href="#i-columns"></use></svg></span>
-  <h1 class="large-title">Welcome back</h1>
-  <p class="callout">Your objects have been talking about you.</p>
+<header class="page-head">
+  <h1 class="shout">welcome back.</h1>
+  <p class="talk">your stuff kept talking while you were gone.</p>
 </header>
 
 <form method="post" novalidate>
   {% csrf_token %}
   {% include "includes/form_group.html" with form=form %}
   <input type="hidden" name="next" value="{{ next }}">
-  <div class="button-stack">
-    <button type="submit" class="button button--block">Log in</button>
-    <a class="button button--plain button--block" href="{% url 'password_reset' %}">Forgot password?</a>
+  <div class="btn-row">
+    <button type="submit" class="btn btn--block">log in</button>
+    <a class="btn btn--ghost btn--block" href="{% url 'signup' %}">new here? make an account</a>
   </div>
 </form>
-
-<p class="footnote page-note">
-  New here? <a href="{% url 'signup' %}">Open your museum</a>
-</p>
+<p class="small after-form"><a class="text-link" href="{% url 'password_reset' %}">forgot your password?</a></p>
 {% endblock %}

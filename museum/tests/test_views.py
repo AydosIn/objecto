@@ -118,7 +118,7 @@ class ExhibitCreateViewTests(TempMediaMixin, TestCase):
         self.client.force_login(self.user)
         response, new_files = self.post_and_count_new_files({'image': make_image_file()})
 
-        self.assertContains(response, 'The object is being shy.')
+        self.assertContains(response, 'it&#x27;s being shy.')
         self.assertFalse(Exhibit.objects.exists())
         self.assertEqual(new_files, 0)
         self.assertEqual(GenerationLog.objects.get().error, 'Gemini API error 503: overloaded')
@@ -134,13 +134,13 @@ class ExhibitCreateViewTests(TempMediaMixin, TestCase):
         upload = SimpleUploadedFile('mug.jpg', b'not a photo', content_type='image/jpeg')
         response = self.client.post(self.url, {'image': upload})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "isn&#x27;t an image we can read")
+        self.assertContains(response, "isn&#x27;t a photo we can read")
         self.assertFalse(Exhibit.objects.exists())
 
     def test_missing_photo_shows_error(self):
         self.client.force_login(self.user)
         response = self.client.post(self.url, {})
-        self.assertContains(response, 'Choose or take a photo first.')
+        self.assertContains(response, 'pick or snap a photo first.')
         self.assertFalse(Exhibit.objects.exists())
 
 
@@ -152,8 +152,8 @@ class ExhibitDetailViewTests(TempMediaMixin, TestCase):
     def test_owner_sees_biography(self):
         self.client.force_login(self.owner)
         response = self.client.get(self.exhibit.get_absolute_url())
-        self.assertContains(response, 'Mug of the Third Shelf')
-        self.assertContains(response, 'The Dishwasher')
+        self.assertContains(response, 'mug of the third shelf')
+        self.assertContains(response, 'the dishwasher')
         self.assertContains(response, self.exhibit.image.url)
 
     def test_other_user_gets_404(self):
@@ -220,7 +220,7 @@ class ExhibitRegenerateViewTests(ExhibitActionTestCase):
 
         self.exhibit.refresh_from_db()
         self.assertEqual(self.exhibit.trauma, 'Old trauma.')
-        self.assertIn('The object is being shy. Try again in a moment.', self.follow_messages(response))
+        self.assertIn("it's being shy. try again in a sec.", self.follow_messages(response))
         self.assertFalse(GenerationLog.objects.get().success)
 
     def test_get_is_not_allowed(self):
@@ -248,7 +248,7 @@ class ExhibitRenameViewTests(ExhibitActionTestCase):
         self.assertEqual(self.exhibit.object_type, 'glass vase')
         self.assertEqual(self.exhibit.name, 'Fresh Gerald')
         self.assertIn(
-            'Apologies to the glass vase. Its real story has been written.',
+            'sorry, glass vase. your real story is up.',
             self.follow_messages(response),
         )
         self.assertEqual(GenerationLog.objects.get().kind, 'rename')
@@ -262,13 +262,13 @@ class ExhibitRenameViewTests(ExhibitActionTestCase):
     def test_empty_name_is_rejected_without_calling_gemini(self):
         self.client.force_login(self.owner)
         response = self.client.post(self.url(), {'object_type': '   '}, follow=True)
-        self.assertIn('Tell us what the object really is.', self.follow_messages(response))
+        self.assertIn('tell us what it really is.', self.follow_messages(response))
         self.generate.assert_not_called()
 
     def test_too_long_name_is_rejected(self):
         self.client.force_login(self.owner)
         response = self.client.post(self.url(), {'object_type': 'v' * 101}, follow=True)
-        self.assertIn('Keep it under 100 characters.', self.follow_messages(response))
+        self.assertIn('keep it under 100 characters.', self.follow_messages(response))
         self.generate.assert_not_called()
 
     def test_stranger_gets_404(self):
@@ -285,7 +285,7 @@ class ExhibitDeleteViewTests(ExhibitActionTestCase):
     def test_confirm_page(self):
         self.client.force_login(self.owner)
         response = self.client.get(self.url())
-        self.assertContains(response, 'Delete Old Name?')
+        self.assertContains(response, 'delete old name?')
         self.assertTrue(Exhibit.objects.filter(pk=self.exhibit.pk).exists())
 
     def test_delete_removes_row_and_photo(self):
@@ -331,4 +331,4 @@ class ExhibitDetailActionsTests(ExhibitActionTestCase):
         self.assertContains(
             response, f'href="{reverse("museum:delete", args=[self.exhibit.pk])}"'
         )
-        self.assertContains(response, 'Delete Old Name?')
+        self.assertContains(response, 'delete old name?')

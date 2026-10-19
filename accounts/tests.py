@@ -59,7 +59,7 @@ class SignupTests(TestCase):
         User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
         response = self.post(email='GERALD@mail.com')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'An account with this email already exists.')
+        self.assertContains(response, 'there&#x27;s already an account with this email.')
         self.assertEqual(User.objects.count(), 1)
 
     def test_mismatched_passwords_are_rejected(self):
@@ -199,7 +199,7 @@ class AdminTests(TestCase):
 class LandingPageTests(TestCase):
     def test_visitor_sees_sign_up(self):
         response = self.client.get(reverse('landing'))
-        self.assertContains(response, 'Every object in your home has a past.')
+        self.assertContains(response, 'this is gerald.')
         self.assertContains(response, reverse('signup'))
 
     def test_logged_in_user_sees_add_object(self):

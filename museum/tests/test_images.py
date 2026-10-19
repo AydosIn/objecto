@@ -74,7 +74,7 @@ class ProcessUploadTests(SimpleTestCase):
 
     def test_rejects_non_image(self):
         upload = SimpleUploadedFile('mug.jpg', b'definitely not a photo')
-        with self.assertRaisesMessage(InvalidImage, "isn't an image"):
+        with self.assertRaisesMessage(InvalidImage, "isn't a photo"):
             process_upload(upload)
 
     def test_rejects_truncated_image(self):
@@ -84,10 +84,10 @@ class ProcessUploadTests(SimpleTestCase):
             process_upload(upload)
 
     def test_rejects_unsupported_format(self):
-        with self.assertRaisesMessage(InvalidImage, 'JPEG, PNG, WebP or HEIC'):
+        with self.assertRaisesMessage(InvalidImage, 'jpeg, png, webp or heic'):
             process_upload(make_image_file(format='GIF', name='mug.gif'))
 
     def test_rejects_files_over_the_size_limit(self):
         with mock.patch.object(images, 'MAX_UPLOAD_BYTES', 100):
-            with self.assertRaisesMessage(InvalidImage, 'over 10 MB'):
+            with self.assertRaisesMessage(InvalidImage, 'over 10 mb'):
                 process_upload(make_image_file(size=(200, 200)))

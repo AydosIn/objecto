@@ -1,48 +1,69 @@
-// Any form with a data-loading attribute shows the loading overlay while the
-// server talks to Gemini (~10 s), and disables its buttons so it can't be sent twice.
-//   <form method="post" data-loading="Interviewing your object…">
+// The interview: while Gemini writes the story (~10 s), the screen cycles through
+// the colour ramp with what's going on in the room. Any form with data-loading
+// triggers it:   <form method="post" data-loading="ok it's talking">
 (function () {
-  const overlay = document.querySelector('[data-loading-overlay]');
-  const text = document.querySelector('[data-loading-text]');
-  if (!overlay || !text) return;
+  const screen = document.querySelector('[data-interview]');
+  if (!screen) return;
+  const line = screen.querySelector('[data-interview-line]');
+  let photo = null; // created when there's a photo to show
 
-  const FOLLOW_UPS = [
-    'Asking about its childhood…',
-    'Taking notes on its rivals…',
-    'Gently bringing up the trauma…',
-    'Asking what it really thinks of you…',
+  const FIELDS = ['grape', 'pink', 'lime', 'orange', 'pool', 'butter', 'mint'];
+  const LINES = [
+    'asking about its childhood',
+    'it has beef with someone',
+    'it’s typing…',
+    'taking notes on the trauma',
+    'it has a lot to say about you',
+    'almost. it’s getting emotional',
   ];
   let timer = null;
 
-  // Listening on document means this runs after the form's own submit handlers,
-  // so a handler that cancels the submit (e.g. "no photo chosen") is respected.
+  function show(text, field) {
+    screen.className = 'interview field--' + field;
+    line.textContent = text;
+    line.classList.remove('is-new');
+    void line.offsetWidth; // replay the entrance
+    line.classList.add('is-new');
+  }
+
+  // Listening on document runs after the form's own handlers, so a submit
+  // they cancelled (e.g. "no photo yet") is respected.
   document.addEventListener('submit', function (event) {
     const form = event.target;
     if (!form.hasAttribute('data-loading') || event.defaultPrevented) return;
 
-    form.querySelectorAll('button, [type="submit"]').forEach(function (button) {
-      button.disabled = true;
-    });
-    // A form inside a sheet: close the sheet so the overlay isn't hidden behind it
-    // (an open modal dialog always sits on top of the rest of the page).
+    form.querySelectorAll('button').forEach(function (button) { button.disabled = true; });
+    // A form inside a sheet: close it, or it would sit above the interview.
     const dialog = form.closest('dialog');
     if (dialog) dialog.close();
-    const lines = [form.dataset.loading || 'Interviewing your object…'].concat(FOLLOW_UPS);
-    let line = 0;
-    text.textContent = lines[0];
-    overlay.hidden = false;
+
+    // Show the object being interviewed: the fresh upload, or the exhibit's photo.
+    const source = document.querySelector('[data-upload-preview]:not([hidden])') ||
+      document.querySelector('.print--hero img');
+    if (source && source.src) {
+      if (!photo) {
+        photo = document.createElement('img');
+        photo.className = 'interview__photo';
+        photo.alt = '';
+        screen.prepend(photo);
+      }
+      photo.src = source.src;
+    }
+
+    let step = 0;
+    show(form.dataset.loading || LINES[0], FIELDS[0]);
+    screen.hidden = false;
     timer = setInterval(function () {
-      line = (line + 1) % lines.length;
-      text.textContent = lines[line];
-    }, 2500);
+      step += 1;
+      show(LINES[(step - 1) % LINES.length], FIELDS[step % FIELDS.length]);
+    }, 1700);
   });
 
-  // The browser's Back button can restore the page exactly as it was left,
-  // overlay and disabled buttons included. Reset them.
+  // Coming back with the Back button can restore the page mid-interview. Reset it.
   window.addEventListener('pageshow', function (event) {
     if (!event.persisted) return;
     clearInterval(timer);
-    overlay.hidden = true;
+    screen.hidden = true;
     document.querySelectorAll('form[data-loading] button').forEach(function (button) {
       button.disabled = false;
     });

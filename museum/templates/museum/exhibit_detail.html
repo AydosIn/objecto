@@ -1,114 +1,157 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ exhibit.name }} · Object Biographies{% endblock %}
+{% block title %}{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}{% endblock %}
+{% block html_class %}is-recap{% endblock %}
+{% block field %}{{ fields.0.slug }}{% endblock %}
+{% block page_class %}page--flush{% endblock %}
 
 {% block content %}
-<article>
-  <figure class="exhibit-photo">
-    <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
-  </figure>
+<div class="recap" data-recap>
+  <nav class="progress progress--static" aria-label="{{ exhibit.name|lower }}'s story" data-progress></nav>
 
-  <header>
-    <div class="exhibit-meta">
-      <span class="pill">{{ exhibit.object_type|capfirst }}</span>
-      <span class="footnote">Acquired {{ exhibit.created_at|date:"j F Y" }}</span>
+  <section class="slide field--{{ fields.0.slug }}" data-slide aria-label="meet {{ exhibit.name|lower }}">
+    <div class="slide__inner slide__inner--split">
+      <div class="chips" data-reveal>
+        <span class="chip">{{ exhibit.object_type|lower }}</span>
+        <span class="chip chip--soft"><span class="swatch" style="--sw: {{ aura.hex }}"></span>aura: {{ aura.name }}</span>
+      </div>
+      <h1 class="shout" data-split>{{ exhibit.name|lower }}</h1>
+      <p class="talk" data-reveal>{{ exhibit.title|lower }}</p>
+      <figure class="print print--hero">
+        <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
+      </figure>
+      <p class="hint" data-reveal style="--i:6"><svg class="icon" aria-hidden="true"><use href="#i-down"></use></svg>tap or scroll for the lore</p>
     </div>
-    <h1 class="large-title">{{ exhibit.name }}</h1>
-    <p class="exhibit-epithet">{{ exhibit.title }}</p>
-  </header>
-
-  <blockquote class="placard">{{ exhibit.placard }}</blockquote>
-
-  <section class="story-section">
-    <h2 class="title-2">Origin story</h2>
-    <div class="story">{{ exhibit.origin_story|linebreaks }}</div>
   </section>
 
-  <section class="story-section">
-    <h2 class="title-2">Defining trauma</h2>
-    <div class="story">{{ exhibit.trauma|linebreaks }}</div>
+  <section class="slide field--{{ fields.1.slug }}" data-slide aria-labelledby="s-origin">
+    <div class="slide__inner">
+      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
+      <h2 class="say" id="s-origin" data-split>where it came from</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.origin_story|linebreaks }}</div>
+    </div>
+  </section>
+
+  <section class="slide field--{{ fields.2.slug }}" data-slide aria-labelledby="s-trauma">
+    <div class="slide__inner">
+      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
+      <h2 class="say" id="s-trauma" data-split>the trauma</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.trauma|linebreaks }}</div>
+    </div>
   </section>
 
   {% if exhibit.rivals %}
-    <section class="story-section">
-      <h2 class="title-2">Rivals</h2>
-      <div class="group">
-        {% for rival in exhibit.rivals %}
-          <div class="row">
-            <div class="row__text">
-              <p class="headline">{{ rival.name }}</p>
-              <p class="row__subtitle">{{ rival.reason }}</p>
-            </div>
-          </div>
-        {% endfor %}
+    <section class="slide field--{{ fields.3.slug }}" data-slide aria-labelledby="s-beef">
+      <div class="slide__inner">
+        <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
+        <h2 class="say" id="s-beef" data-split>the beef</h2>
+        <ul class="rivals">
+          {% for rival in exhibit.rivals %}
+            <li class="rival" style="--i:{{ forloop.counter|add:forloop.counter|add:1 }}">
+              <p class="rival__name say"><span class="vs">vs</span>{{ rival.name|lower }}</p>
+              <p class="talk">{{ rival.reason }}</p>
+            </li>
+          {% endfor %}
+        </ul>
       </div>
     </section>
   {% endif %}
 
-  <section class="story-section">
-    <h2 class="title-2">Hopes and fears</h2>
-    <div class="story">{{ exhibit.hopes_and_fears|linebreaks }}</div>
-  </section>
-
-  <section class="story-section">
-    <h2 class="title-2">Its opinion of you</h2>
-    <div class="message">
-      <span class="message__sender">{{ exhibit.name }}</span>
-      <div class="message__bubble">{{ exhibit.opinion_of_owner|linebreaks }}</div>
+  <section class="slide field--{{ fields.4.slug }}" data-slide aria-labelledby="s-hopes">
+    <div class="slide__inner">
+      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
+      <h2 class="say" id="s-hopes" data-split>hopes and fears</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.hopes_and_fears|linebreaks }}</div>
     </div>
   </section>
 
-  <section class="exhibit-actions" aria-label="Exhibit actions">
-    <div class="group">
-      <form method="post" action="{% url 'museum:regenerate' exhibit.pk %}"
-            data-loading="Asking {{ exhibit.name }} for a second interview…">
-        {% csrf_token %}
-        <button type="submit" class="row row--icon row-action">
-          <span class="row__glyph" aria-hidden="true"><svg class="icon"><use href="#i-refresh"></use></svg></span>
-          <span class="row__text">Regenerate story</span>
+  <section class="slide field--{{ fields.5.slug }}" data-slide aria-labelledby="s-opinion">
+    <div class="slide__inner">
+      <p class="ticket" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
+      <h2 class="say" id="s-opinion" data-split>what it thinks of you</h2>
+      <div class="thread">
+        <p class="thread__from" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
+        <div class="thread__stack">
+          <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="bubble">{{ exhibit.opinion_of_owner|linebreaks }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide field--midnight" data-slide aria-labelledby="s-card">
+    <div class="slide__inner wrap-up">
+      <h2 class="visually-hidden" id="s-card">{{ exhibit.name }}'s card</h2>
+      <article class="placard field--{{ fields.0.slug }}">
+        <div class="placard__top">
+          <img src="{{ exhibit.image.url }}" alt="">
+          <div>
+            <p class="placard__name">{{ exhibit.name|lower }}</p>
+            <p class="small">{{ exhibit.title|lower }}</p>
+          </div>
+        </div>
+        <blockquote class="placard__quote">{{ exhibit.placard }}</blockquote>
+        <dl class="facts">
+          <div><dt>it's a</dt><dd>{{ exhibit.object_type|lower }}</dd></div>
+          <div><dt>aura</dt><dd>{{ aura.name }}</dd></div>
+          {% if exhibit.rivals %}<div><dt>nemesis</dt><dd>{{ exhibit.rivals.0.name|lower }}</dd></div>{% endif %}
+          <div><dt>in your museum since</dt><dd>{{ exhibit.created_at|date:"j M Y"|lower }}</dd></div>
+        </dl>
+      </article>
+
+      <div class="card" data-reveal style="--i:6">
+        <form method="post" action="{% url 'museum:regenerate' exhibit.pk %}"
+              data-loading="asking {{ exhibit.name|lower }} for a second interview">
+          {% csrf_token %}
+          <button type="submit" class="row row-action">
+            <span class="glyph" style="--g:#5b2bff" aria-hidden="true"><svg class="icon"><use href="#i-refresh"></use></svg></span>
+            reroll the story
+            <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </button>
+        </form>
+        <button type="button" class="row row-action" data-open-dialog="rename-sheet">
+          <span class="glyph" style="--g:#ff6a13" aria-hidden="true"><svg class="icon"><use href="#i-pencil"></use></svg></span>
+          wrong object? rename it
+          <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
         </button>
-      </form>
-      <button type="button" class="row row--icon row-action" data-open-dialog="rename-sheet">
-        <span class="row__glyph row__glyph--gray" aria-hidden="true"><svg class="icon"><use href="#i-pencil"></use></svg></span>
-        <span class="row__text">Wrong object? Rename it</span>
-      </button>
-      <a class="row row--icon row-action row-action--destructive" href="{% url 'museum:delete' exhibit.pk %}"
-         data-open-dialog="delete-alert">
-        <span class="row__glyph row__glyph--red" aria-hidden="true"><svg class="icon"><use href="#i-trash"></use></svg></span>
-        <span class="row__text">Delete exhibit</span>
-      </a>
+        <a class="row row-action row-action--danger" href="{% url 'museum:delete' exhibit.pk %}" data-open-dialog="delete-alert">
+          <span class="glyph" style="--g:#e5133a" aria-hidden="true"><svg class="icon"><use href="#i-trash"></use></svg></span>
+          delete {{ exhibit.name|lower }}
+        </a>
+      </div>
+
+      <a class="btn" href="{% url 'museum:new' %}" data-reveal style="--i:8">add another object</a>
     </div>
   </section>
-</article>
+</div>
 
 <dialog class="sheet" id="rename-sheet" aria-labelledby="rename-title">
-  <form method="post" action="{% url 'museum:rename' exhibit.pk %}"
-        data-loading="Apologising to the object and starting over…">
+  <div class="sheet__grabber" aria-hidden="true"></div>
+  <form method="post" action="{% url 'museum:rename' exhibit.pk %}" class="sheet__body"
+        data-loading="apologizing to it and starting over">
     {% csrf_token %}
-    <div class="sheet__grabber" aria-hidden="true"></div>
-    <div class="sheet__bar">
-      <button type="button" class="button button--plain" data-close-dialog>Cancel</button>
-      <h2 class="headline" id="rename-title">Rename object</h2>
-      <button type="submit" class="button button--plain">Rewrite</button>
-    </div>
-    <div class="sheet__body">
-      {% include "includes/form_group.html" with form=rename_form %}
-      <p class="group-footer">{{ exhibit.name }} gets a new story written for what it really is. The current story is replaced.</p>
-    </div>
+    <h2 class="sheet__title" id="rename-title">what is it really?</h2>
+    <p class="sheet__text">{{ exhibit.name|lower }} gets a fresh story about what it actually is. this one gets replaced.</p>
+    {% include "includes/form_group.html" with form=rename_form %}
+    <button type="submit" class="btn btn--block">rewrite the story</button>
+    <button type="button" class="btn btn--ghost btn--block" data-close-dialog>never mind</button>
   </form>
 </dialog>
 
-<dialog class="alert" id="delete-alert" aria-labelledby="delete-title" aria-describedby="delete-message">
-  <div class="alert__content">
-    <h2 class="headline" id="delete-title">Delete {{ exhibit.name }}?</h2>
-    <p class="footnote" id="delete-message">Its story and photo will be removed for good.</p>
-  </div>
-  <div class="alert__buttons">
-    <button type="button" class="alert__button" data-close-dialog autofocus>Cancel</button>
-    <form method="post" action="{% url 'museum:delete' exhibit.pk %}">
-      {% csrf_token %}
-      <button type="submit" class="alert__button alert__button--destructive">Delete</button>
-    </form>
-  </div>
+<dialog class="alert" id="delete-alert" aria-labelledby="delete-title" aria-describedby="delete-text">
+  <h2 class="alert__title" id="delete-title">delete {{ exhibit.name|lower }}?</h2>
+  <p class="alert__text" id="delete-text">its whole story and photo are gone for good.</p>
+  <form method="post" action="{% url 'museum:delete' exhibit.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--danger btn--block">delete</button>
+    <button type="button" class="btn btn--ghost btn--block" data-close-dialog autofocus>keep it</button>
+  </form>
 </dialog>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/recap.js' %}" defer></script>
 {% endblock %}

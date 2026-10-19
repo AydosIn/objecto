@@ -23,7 +23,7 @@ class SignupView(CreateView):
     def form_valid(self, form):
         user = form.save()
         login(self.request, user)
-        messages.success(self.request, 'Welcome! Your museum is open.')
+        messages.success(self.request, "you're in. go find something to interview.")
         return redirect(settings.LOGIN_REDIRECT_URL)
 
 
@@ -31,7 +31,7 @@ class ProfileView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     form_class = ProfileForm
     template_name = 'accounts/profile.html'
     success_url = reverse_lazy('profile')
-    success_message = 'Profile saved.'
+    success_message = 'saved. your stuff will judge you accordingly.'
 
     def get_object(self, queryset=None):
         # get_or_create covers users made before the signal existed (e.g. loaddata).

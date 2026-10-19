@@ -1,24 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Sign up · Object Biographies{% endblock %}
+{% block title %}make an account{% endblock %}
+{% block field %}pink{% endblock %}
 {% block page_class %}page--narrow{% endblock %}
 
 {% block content %}
-<header class="page-header page-header--center">
-  <span class="app-icon app-icon--large" aria-hidden="true"><svg class="icon"><use href="#i-columns"></use></svg></span>
-  <h1 class="large-title">Open your museum</h1>
-  <p class="callout">One account, one private collection of household secrets.</p>
+<header class="page-head">
+  <h1 class="shout">make an account.</h1>
+  <p class="talk">your stuff has been waiting to say a few things.</p>
 </header>
 
 <form method="post" novalidate>
   {% csrf_token %}
   {% include "includes/form_group.html" with form=form %}
-  <div class="button-stack">
-    <button type="submit" class="button button--block">Sign up</button>
+  <div class="btn-row">
+    <button type="submit" class="btn btn--block">make my account</button>
+    <a class="btn btn--ghost btn--block" href="{% url 'login' %}">i already have one</a>
   </div>
 </form>
-
-<p class="footnote page-note">
-  Already have an account? <a href="{% url 'login' %}">Log in</a>
-</p>
 {% endblock %}

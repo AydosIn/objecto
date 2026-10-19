@@ -1,53 +1,101 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block page_class %}page--wide{% endblock %}
+{% block page_class %}page--flush{% endblock %}
 
 {% block content %}
-<section class="hero">
-  <span class="app-icon app-icon--large" aria-hidden="true"><svg class="icon"><use href="#i-columns"></use></svg></span>
-  <h1 class="hero__title">Every object in your home has a past.</h1>
-  <p class="hero__lead">
-    Photograph a chair, a mug or a lonely sock. It tells you where it came from,
-    who its rivals are and what it honestly thinks of you.
-  </p>
-  <div class="hero__actions">
-    {% if user.is_authenticated %}
-      <a class="button" href="{% url 'museum:new' %}">Add an object</a>
-    {% else %}
-      <a class="button" href="{% url 'signup' %}">Open your museum</a>
-      <a class="button button--plain" href="{% url 'login' %}">Log in</a>
-    {% endif %}
-  </div>
+{% static 'img/example-mug.jpg' as mug %}
+<section class="stage" data-stage aria-roledescription="carousel" aria-label="an example recap: gerald the mug">
+  <nav class="progress" aria-label="example slides" data-progress></nav>
+  <button type="button" class="round round--quiet stage__pause" data-stage-pause aria-label="pause">
+    <svg class="icon" aria-hidden="true"><use href="#i-pause"></use></svg>
+  </button>
 
-  <figure class="widget" aria-label="An example exhibit">
-    <div class="widget__top">
-      <span class="widget__object" aria-hidden="true"><svg class="icon"><use href="#i-mug"></use></svg></span>
-      <div>
-        <p class="headline">Gerald</p>
-        <p class="footnote">Mug of the Third Shelf</p>
+  <article class="slide field--grape" data-slide aria-roledescription="slide">
+    <div class="slide__inner slide__inner--split">
+      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
+      <h1 class="shout" data-split>this is gerald.</h1>
+      <p class="talk" data-reveal>a plain white mug with a thin blue rim. he has a lot to say about you.</p>
+      <figure class="print"><img src="{{ mug }}" alt="a white mug with a thin blue rim on a wooden table"></figure>
+    </div>
+  </article>
+
+  <article class="slide field--pink" data-slide aria-roledescription="slide">
+    <div class="slide__inner">
+      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
+      <h2 class="shout" data-split>refilled 1,400 times.</h2>
+      <p class="talk" data-reveal>and that brown line inside his rim? nobody ever scrubbed it. he knows you saw it.</p>
+    </div>
+  </article>
+
+  <article class="slide field--lime" data-slide aria-roledescription="slide">
+    <div class="slide__inner">
+      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
+      <h2 class="say" data-split>the beef</h2>
+      <ul class="rivals">
+        <li class="rival" style="--i:3">
+          <p class="rival__name say"><span class="vs">vs</span>the dishwasher</p>
+          <p class="talk">took the shine off his blue rim and never apologized.</p>
+        </li>
+        <li class="rival" style="--i:6">
+          <p class="rival__name say"><span class="vs">vs</span>the new mug</p>
+          <p class="talk">it's bigger. that's it. that's the whole problem.</p>
+        </li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="slide field--orange" data-slide aria-roledescription="slide">
+    <div class="slide__inner">
+      <p class="ticket" data-reveal><img src="{{ mug }}" alt="">gerald, an example</p>
+      <h2 class="say" data-split>what he thinks of you</h2>
+      <div class="thread">
+        <p class="thread__from" data-reveal><img src="{{ mug }}" alt="">gerald</p>
+        <div class="thread__stack">
+          <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="bubble"><p>you leave me half full on this wooden table every night. i'm not mad. i'm just cold. still my favorite human tho</p></div>
+        </div>
       </div>
     </div>
-    <blockquote class="widget__quote">
-      Survived three moves, one dishwasher feud and a latte he still won't talk about.
-    </blockquote>
-  </figure>
+  </article>
+
+  <article class="slide field--midnight" data-slide aria-roledescription="slide">
+    <div class="slide__inner">
+      <h2 class="shout" data-split>your stuff has opinions too.</h2>
+      <p class="talk" data-reveal>snap anything in your house. it tells you its life story in about ten seconds.</p>
+    </div>
+  </article>
 </section>
 
-<ul class="features" aria-label="How it works">
-  <li class="feature">
-    <span class="row__glyph" aria-hidden="true"><svg class="icon"><use href="#i-camera"></use></svg></span>
-    <p class="headline">Photograph</p>
-    <p class="callout">Point your phone at anything in the house.</p>
-  </li>
-  <li class="feature">
-    <span class="row__glyph" aria-hidden="true"><svg class="icon"><use href="#i-bubble"></use></svg></span>
-    <p class="headline">Listen</p>
-    <p class="callout">It confesses its origin, its trauma and its rivals.</p>
-  </li>
-  <li class="feature">
-    <span class="row__glyph" aria-hidden="true"><svg class="icon"><use href="#i-columns"></use></svg></span>
-    <p class="headline">Collect</p>
-    <p class="callout">Its story joins your private museum.</p>
-  </li>
-</ul>
+<section class="how field--midnight" aria-labelledby="how-title">
+  <h2 class="visually-hidden" id="how-title">how it works</h2>
+  <ol>
+    <li>
+      <p class="say">snap a thing.</p>
+      <p class="talk">a mug, a chair, a sock, the weird lamp. one object, good light.</p>
+    </li>
+    <li>
+      <p class="say">wait like ten seconds.</p>
+      <p class="talk">it's being interviewed. it has a lot to get off its chest.</p>
+    </li>
+    <li>
+      <p class="say">get roasted, nicely.</p>
+      <p class="talk">its origin story, its trauma, its beef, and its honest opinion of you, saved to your private museum.</p>
+    </li>
+  </ol>
+</section>
+
+<div class="dock">
+  {% if user.is_authenticated %}
+    <a class="btn" href="{% url 'museum:new' %}">add an object</a>
+  {% else %}
+    <a class="btn" href="{% url 'signup' %}">make your stuff talk</a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/recap.js' %}" defer></script>
 {% endblock %}

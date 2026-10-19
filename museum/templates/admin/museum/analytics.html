@@ -1,0 +1,192 @@
+{% extends "admin/base_site.html" %}
+{% load static analytics_format %}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a> › Analytics
+</div>
+{% endblock %}
+
+{% block content %}
+{% with t=report.totals %}
+<div class="analytics">
+
+  <div class="analytics-filters">
+    <nav class="analytics-periods" aria-label="Time range">
+      {% for value, label in periods.items %}
+        <a href="?days={{ value }}"{% if value == report.days %} aria-current="true"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <p class="analytics-note">
+      Since {{ report.first_day|date:"j M Y" }} ·
+      cost estimate at {{ report.prices.input|usd }} in / {{ report.prices.output|usd }} out per 1M tokens
+    </p>
+  </div>
+
+  {% if not t.calls %}
+    <div class="analytics-card analytics-empty">
+      <h2>No Gemini calls in this period</h2>
+      <p>Upload a photo in the museum and the numbers will start appearing here.</p>
+    </div>
+  {% else %}
+
+  <section class="kpi-row" aria-label="Summary">
+    <div class="kpi">
+      <p class="kpi__label">Biographies created</p>
+      <p class="kpi__value">{{ report.exhibits_created|compact }}</p>
+      <p class="kpi__sub">new exhibits</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi__label">Gemini calls</p>
+      <p class="kpi__value">{{ t.calls|compact }}</p>
+      <p class="kpi__sub">{{ t.users }} active user{{ t.users|pluralize }}</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi__label">Success rate</p>
+      <p class="kpi__value">{{ t.success_rate|percent }}</p>
+      <p class="kpi__sub">{{ t.refused }} refused · {{ t.errored }} error{{ t.errored|pluralize }}</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi__label">Typical time</p>
+      <p class="kpi__value">{{ t.median_ms|seconds }}</p>
+      <p class="kpi__sub">9 in 10 under {{ t.p90_ms|seconds }}</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi__label">Tokens</p>
+      <p class="kpi__value">{{ t.input_tokens|add:t.billed_output_tokens|compact }}</p>
+      <p class="kpi__sub">{{ t.input_tokens|compact }} in · {{ t.billed_output_tokens|compact }} out</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi__label">Estimated cost</p>
+      <p class="kpi__value">{{ t.cost|usd }}</p>
+      <p class="kpi__sub">{{ t.cost_per_success|usd }} per biography</p>
+    </div>
+  </section>
+
+  {% if t.calls_with_tokens < t.calls %}
+    <p class="analytics-note">
+      Tokens and cost cover {{ t.calls_with_tokens }} of {{ t.calls }} calls. Older calls were logged
+      before token tracking existed.
+    </p>
+  {% endif %}
+
+  <section class="analytics-card">
+    <h2>Gemini calls per day</h2>
+    <ul class="chart-legend" aria-hidden="true">
+      <li><span class="chart-legend__swatch chart-legend__swatch--ok"></span>Succeeded</li>
+      <li><span class="chart-legend__swatch chart-legend__swatch--failed"></span>Failed or refused</li>
+    </ul>
+    <div class="daily-chart" data-daily-chart role="img"
+         aria-label="Gemini calls per day, split into succeeded and failed. The same numbers are in the table below."></div>
+    <details class="chart-table">
+      <summary>Show as table</summary>
+      <table>
+        <thead><tr><th>Day</th><th class="num">Succeeded</th><th class="num">Failed</th></tr></thead>
+        <tbody>
+          {% for day in report.daily %}{% if day.succeeded or day.failed %}
+            <tr><td>{{ day.date }}</td><td class="num">{{ day.succeeded }}</td><td class="num">{{ day.failed }}</td></tr>
+          {% endif %}{% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {{ report.daily|json_script:"daily-data" }}
+  </section>
+
+  <section class="analytics-card">
+    <h2>By prompt version</h2>
+    <p class="analytics-note">Compare prompt edits: speed, story length, refusals and cost per biography.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th><th class="num">Calls</th><th class="num">Success</th><th class="num">Refused</th>
+            <th class="num">Avg time</th><th class="num">Avg output tokens</th><th class="num">Cost per biography</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in report.by_prompt %}
+            <tr>
+              <td class="nowrap">
+                {% if row.prompt_version %}
+                  <a href="{% url 'admin:museum_systemprompt_change' row.prompt_version %}">v{{ row.prompt_version }} · {{ row.prompt_version__label }}</a>
+                  {% if row.prompt_version__is_active %}<span class="badge">active</span>{% endif %}
+                {% else %}
+                  <span class="quiet">Not recorded</span>
+                {% endif %}
+              </td>
+              <td class="num">{{ row.calls }}</td>
+              <td class="num">{{ row.success_rate|percent }}</td>
+              <td class="num">{{ row.refused }}</td>
+              <td class="num">{{ row.avg_ms|seconds }}</td>
+              <td class="num">{{ row.avg_output_tokens|compact }}</td>
+              <td class="num">{{ row.cost_per_success|usd }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="analytics-grid">
+    <section class="analytics-card">
+      <h2>By action</h2>
+      <table>
+        <thead><tr><th>Action</th><th class="num">Calls</th><th class="num">Success</th></tr></thead>
+        <tbody>
+          {% for row in report.by_kind %}
+            <tr><td>{{ row.label }}</td><td class="num">{{ row.calls }}</td><td class="num">{{ row.success_rate|percent }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="analytics-card">
+      <h2>Most active users</h2>
+      <table>
+        <thead><tr><th>User</th><th class="num">Calls</th><th class="num">Cost</th></tr></thead>
+        <tbody>
+          {% for row in report.top_users %}
+            <tr>
+              <td><a href="{% url 'admin:accounts_user_change' row.user %}">{{ row.user__email }}</a></td>
+              <td class="num">{{ row.calls }}</td>
+              <td class="num">{{ row.cost|usd }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <section class="analytics-card">
+    <h2>Why calls failed</h2>
+    {% if report.failures %}
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Reason</th><th class="num">Times</th><th>Last seen</th></tr></thead>
+          <tbody>
+            {% for row in report.failures %}
+              <tr>
+                <td class="reason">{{ row.error|default:"(no message)" }}</td>
+                <td class="num">{{ row.count }}</td>
+                <td>{{ row.last_seen|date:"j M, H:i" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="analytics-note"><a href="{% url 'admin:museum_generationlog_changelist' %}?success__exact=0">All failed calls →</a></p>
+    {% else %}
+      <p class="analytics-note">No failures in this period.</p>
+    {% endif %}
+  </section>
+
+  {% endif %}
+</div>
+{% endwith %}
+<div class="chart-tooltip" data-chart-tooltip hidden></div>
+<script src="{% static 'js/analytics_chart.js' %}" defer></script>
+{% endblock %}

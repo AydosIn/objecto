@@ -60,14 +60,19 @@ class BiographyError(Exception):
     """Base error. user_message is safe to show; str(error) is the detail for logs."""
 
     user_message = 'The object is being shy. Try again in a moment.'
+    # Known only when Gemini actually answered (a refusal still costs tokens).
+    usage = {}
+    prompt_version = None
 
 
 class NotAnObject(BiographyError):
-    def __init__(self, reason):
+    def __init__(self, reason, usage=None, prompt_version=None):
         super().__init__(f'Not an object: {reason}')
         self.user_message = (
             f"That doesn't look like an object we can interview. {reason}".strip()
         )
+        self.usage = usage or {}
+        self.prompt_version = prompt_version
 
 
 class GenerationFailed(BiographyError):
@@ -159,7 +164,7 @@ def generate_biography(
         raise GenerationFailed(f'Gemini returned unusable JSON {MAX_ATTEMPTS} times')
 
     if not biography.is_object:
-        raise NotAnObject(biography.rejection_reason)
+        raise NotAnObject(biography.rejection_reason, _usage(response), prompt)
     return _to_result(biography, _usage(response), prompt)
 
 

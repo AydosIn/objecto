@@ -1,5 +1,7 @@
 import mimetypes
+import time
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
@@ -24,6 +26,25 @@ def hints_for(user, object_type=''):
     )
 
 
+def log_generation(user, kind, started, *, biography=None, error=None, exhibit=None):
+    """One GenerationLog row per Gemini call, success or not, with timing and tokens."""
+    source = biography or error
+    usage = getattr(source, 'usage', None) or {}
+    GenerationLog.objects.create(
+        user=user,
+        kind=kind,
+        success=error is None,
+        error=str(error)[:255] if error else '',
+        duration_ms=round((time.monotonic() - started) * 1000),
+        input_tokens=usage.get('input_tokens', 0),
+        output_tokens=usage.get('output_tokens', 0),
+        thinking_tokens=usage.get('thinking_tokens', 0),
+        model_name=biography.model_name if biography else settings.GEMINI_MODEL,
+        prompt_version=getattr(source, 'prompt_version', None),
+        exhibit=exhibit,
+    )
+
+
 class OwnedExhibitMixin(LoginRequiredMixin):
     """Every exhibit view only sees the current user's exhibits, so anyone
     else's is a 404 and its existence isn't revealed (FR-3)."""
@@ -44,12 +65,11 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
         photo = form.processed_image
 
         # Gemini first: if it fails, nothing (no row, no file) has been saved yet.
+        started = time.monotonic()
         try:
             biography = generate_biography(photo.content, photo.mime_type, hints_for(user))
         except BiographyError as error:
-            GenerationLog.objects.create(
-                user=user, kind=GenerationLog.Kind.CREATE, success=False, error=str(error)[:255]
-            )
+            log_generation(user, GenerationLog.Kind.CREATE, started, error=error)
             form.add_error('image', error.user_message)
             return self.form_invalid(form)
 
@@ -58,7 +78,9 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
             # The stored file is the cleaned JPEG, never the original upload.
             exhibit.image.save('photo.jpg', ContentFile(photo.content), save=False)
             exhibit.save()
-            GenerationLog.objects.create(user=user, kind=GenerationLog.Kind.CREATE, success=True)
+            log_generation(
+                user, GenerationLog.Kind.CREATE, started, biography=biography, exhibit=exhibit
+            )
         return redirect(exhibit)
 
 
@@ -88,12 +110,11 @@ class RewriteBiographyView(OwnedExhibitMixin, SingleObjectMixin, View):
             return redirect(exhibit)
 
         mime_type = mimetypes.guess_type(exhibit.image.name)[0] or 'image/jpeg'
+        started = time.monotonic()
         try:
             biography = generate_biography(image_bytes, mime_type, hints_for(user, object_type))
         except BiographyError as error:
-            GenerationLog.objects.create(
-                user=user, kind=self.kind, success=False, error=str(error)[:255]
-            )
+            log_generation(user, self.kind, started, error=error, exhibit=exhibit)
             messages.error(self.request, error.user_message)
             return redirect(exhibit)
 
@@ -103,7 +124,7 @@ class RewriteBiographyView(OwnedExhibitMixin, SingleObjectMixin, View):
             # Whatever Gemini calls it, the user's wording wins.
             exhibit.object_type = object_type
             exhibit.save()
-            GenerationLog.objects.create(user=user, kind=self.kind, success=True)
+            log_generation(user, self.kind, started, biography=biography, exhibit=exhibit)
         messages.success(self.request, self.success_message(exhibit))
         return redirect(exhibit)
 

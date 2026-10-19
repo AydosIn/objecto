@@ -140,13 +140,44 @@ class GenerationLog(models.Model):
     error = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # For the analytics page. Rows from before these fields existed have no
+    # duration and zero tokens; analytics treats them as "not recorded".
+    duration_ms = models.PositiveIntegerField(
+        null=True, blank=True, help_text='How long the Gemini call took.'
+    )
+    input_tokens = models.PositiveIntegerField(default=0)
+    output_tokens = models.PositiveIntegerField(default=0)
+    thinking_tokens = models.PositiveIntegerField(default=0, help_text='Billed as output.')
+    model_name = models.CharField(max_length=100, blank=True)
+    prompt_version = models.ForeignKey(
+        SystemPrompt,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='generation_logs',
+    )
+    exhibit = models.ForeignKey(
+        Exhibit,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='generation_logs',
+        help_text='The exhibit this call created or rewrote (empty if it failed or was deleted).',
+    )
+
     class Meta:
         ordering = ['-created_at']
         indexes = [
             # The daily limit: count one user's generations since midnight.
             models.Index(fields=['user', 'created_at']),
+            # Analytics: everything in a date range.
+            models.Index(fields=['created_at']),
         ]
 
     def __str__(self):
         status = 'ok' if self.success else 'failed'
         return f'{self.user} · {self.get_kind_display()} · {status}'
+
+    @property
+    def billed_output_tokens(self):
+        return self.output_tokens + self.thinking_tokens

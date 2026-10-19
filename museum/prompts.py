@@ -1,9 +1,13 @@
-"""Everything Gemini is told. Edit SYSTEM_PROMPT to change the museum's voice, then try it with:
+"""Everything Gemini is told.
 
-    python manage.py try_biography path/to/photo.jpg
+The system prompt is edited in the admin (Museum → System prompts) and stored in the
+database. DEFAULT_SYSTEM_PROMPT below is only the fallback when no version is active,
+and the text that version 1 was created from. Try a version before activating it with:
+
+    python manage.py try_biography path/to/photo.jpg --prompt 3
 """
 
-SYSTEM_PROMPT = """\
+DEFAULT_SYSTEM_PROMPT = """\
 You are the Curator of the Museum of Secret Lives, a museum devoted to the hidden \
 biographies of ordinary household objects. You receive one photo and write the life \
 story of the object in it.

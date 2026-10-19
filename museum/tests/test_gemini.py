@@ -2,10 +2,11 @@ from types import SimpleNamespace
 from unittest import mock
 
 import httpx
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from google.genai import errors
 
-from museum.prompts import SYSTEM_PROMPT, build_user_prompt
+from museum.models import SystemPrompt
+from museum.prompts import DEFAULT_SYSTEM_PROMPT, build_user_prompt
 from museum.services.gemini import (
     BiographyHints,
     GeminiBiography,
@@ -41,7 +42,7 @@ def fake_response(data=None, text=None):
 
 
 @override_settings(GEMINI_API_KEY='test-key', GEMINI_MODEL='gemini-test-flash')
-class GenerateBiographyTests(SimpleTestCase):
+class GenerateBiographyTests(TestCase):
     def setUp(self):
         patcher = mock.patch('museum.services.gemini.genai.Client')
         self.client_class = patcher.start()
@@ -69,7 +70,7 @@ class GenerateBiographyTests(SimpleTestCase):
         self.assertEqual(self.client_class.call_args.kwargs['api_key'], 'test-key')
         kwargs = self.generate.call_args.kwargs
         self.assertEqual(kwargs['model'], 'gemini-test-flash')
-        self.assertEqual(kwargs['config'].system_instruction, SYSTEM_PROMPT)
+        self.assertEqual(kwargs['config'].system_instruction, SystemPrompt.active().text)
         self.assertIs(kwargs['config'].response_schema, GeminiBiography)
         image_part, prompt = kwargs['contents']
         self.assertEqual(image_part.inline_data.data, b'jpeg-bytes')
@@ -129,6 +130,32 @@ class GenerateBiographyTests(SimpleTestCase):
         with self.assertRaises(GenerationFailed):
             self.call()
         self.client_class.assert_not_called()
+
+    def system_instruction(self):
+        return self.generate.call_args.kwargs['config'].system_instruction
+
+    def test_uses_the_active_prompt_from_the_database(self):
+        SystemPrompt.objects.update(is_active=False)
+        active = SystemPrompt.objects.create(label='Noir', text='Write like a noir detective.', is_active=True)
+        self.generate.return_value = fake_response(GOOD)
+        result = self.call()
+        self.assertEqual(self.system_instruction(), 'Write like a noir detective.')
+        self.assertEqual(result.prompt_version, active)
+        self.assertEqual(result.as_model_fields()['prompt_version'], active)
+
+    def test_falls_back_to_code_prompt_when_none_is_active(self):
+        SystemPrompt.objects.update(is_active=False)
+        self.generate.return_value = fake_response(GOOD)
+        result = self.call()
+        self.assertEqual(self.system_instruction(), DEFAULT_SYSTEM_PROMPT)
+        self.assertIsNone(result.prompt_version)
+
+    def test_explicit_prompt_overrides_the_active_one(self):
+        draft = SystemPrompt.objects.create(label='Draft', text='Write like Shakespeare.')
+        self.generate.return_value = fake_response(GOOD)
+        result = generate_biography(b'jpeg-bytes', 'image/jpeg', BiographyHints(), prompt=draft)
+        self.assertEqual(self.system_instruction(), 'Write like Shakespeare.')
+        self.assertEqual(result.prompt_version, draft)
 
 
 class PromptTests(SimpleTestCase):

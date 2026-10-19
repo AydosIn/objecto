@@ -109,6 +109,7 @@ Landing page ──► Sign up / Log in ──► My Museum (grid)
 
 ### 6.6 Admin
 - FR-24: Django admin at `/admin/` (staff only) lists users, profiles, exhibits (with image thumbnails, search and filters) and generation logs.
+- FR-25: The system prompt is edited in the admin (Museum → System prompts), not in code. Every text edit is saved as a new version; exactly one version is active (enforced by a database constraint) and is used for every new biography. Versions can be activated with an admin action; the active one can't be deleted. Each exhibit records the prompt version that wrote it. With no active version, the default prompt in `museum/prompts.py` is used. `try_biography --prompt N` tries a version before activating it.
 
 ## 7. Non-functional requirements
 

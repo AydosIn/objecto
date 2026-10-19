@@ -4,7 +4,7 @@ One request per biography: photo + prompt in, JSON matching GeminiBiography out.
 """
 
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field, fields
 
 import httpx
 from django.conf import settings
@@ -12,8 +12,8 @@ from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel, ValidationError
 
-from museum.models import Exhibit
-from museum.prompts import SYSTEM_PROMPT, build_user_prompt
+from museum.models import Exhibit, SystemPrompt
+from museum.prompts import DEFAULT_SYSTEM_PROMPT, build_user_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +48,12 @@ class BiographyResult:
     model_name: str
     # Token usage, for curiosity and cost estimates. Not stored on the Exhibit.
     usage: dict = field(default_factory=dict, compare=False)
+    # The SystemPrompt version used, or None for the default prompt in code.
+    prompt_version: SystemPrompt | None = None
 
     def as_model_fields(self):
         """The fields that map one-to-one onto Exhibit."""
-        fields = asdict(self)
-        del fields['usage']
-        return fields
+        return {f.name: getattr(self, f.name) for f in fields(self) if f.name != 'usage'}
 
 
 class BiographyError(Exception):
@@ -111,16 +111,25 @@ TEXT_FIELDS = (
 # --- The call ------------------------------------------------------------------------
 
 
-def generate_biography(image_bytes: bytes, mime_type: str, hints: BiographyHints) -> BiographyResult:
+def generate_biography(
+    image_bytes: bytes,
+    mime_type: str,
+    hints: BiographyHints,
+    prompt: SystemPrompt | None = None,
+) -> BiographyResult:
+    """`prompt` overrides the active SystemPrompt (used to try a version before activating it)."""
     if not settings.GEMINI_API_KEY or not settings.GEMINI_MODEL:
         raise GenerationFailed('GEMINI_API_KEY or GEMINI_MODEL is not set in .env')
+
+    if prompt is None:
+        prompt = SystemPrompt.active()
 
     client = genai.Client(
         api_key=settings.GEMINI_API_KEY,
         http_options=types.HttpOptions(timeout=TIMEOUT_SECONDS * 1000),
     )
     config = types.GenerateContentConfig(
-        system_instruction=SYSTEM_PROMPT,
+        system_instruction=prompt.text if prompt else DEFAULT_SYSTEM_PROMPT,
         response_mime_type='application/json',
         response_schema=GeminiBiography,
         temperature=TEMPERATURE,
@@ -151,7 +160,7 @@ def generate_biography(image_bytes: bytes, mime_type: str, hints: BiographyHints
 
     if not biography.is_object:
         raise NotAnObject(biography.rejection_reason)
-    return _to_result(biography, _usage(response))
+    return _to_result(biography, _usage(response), prompt)
 
 
 def _parse(response):
@@ -170,7 +179,7 @@ def _parse(response):
     return biography
 
 
-def _to_result(biography, usage):
+def _to_result(biography, usage, prompt):
     def clip(name):
         # Never let a chatty model break a CharField limit.
         value = getattr(biography, name).strip()
@@ -185,6 +194,7 @@ def _to_result(biography, usage):
         ],
         model_name=settings.GEMINI_MODEL,
         usage=usage,
+        prompt_version=prompt,
     )
 
 

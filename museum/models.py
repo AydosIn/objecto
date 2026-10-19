@@ -28,6 +28,48 @@ def validate_rivals(value):
             raise ValidationError('Each rival needs exactly a "name" and a "reason", both text.')
 
 
+class SystemPrompt(models.Model):
+    """A version of the instructions Gemini gets. Edited in the admin, never in place:
+    every edit is saved as a new version, and exactly one version is active."""
+
+    label = models.CharField(
+        max_length=100, help_text='A short note on what changed, e.g. "More dramatic narrator".'
+    )
+    text = models.TextField()
+    is_active = models.BooleanField(
+        'active',
+        default=False,
+        help_text='The active version is used for every new biography. Only one can be active.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            # The database itself refuses a second active prompt.
+            models.UniqueConstraint(
+                fields=['is_active'],
+                condition=models.Q(is_active=True),
+                name='only_one_active_system_prompt',
+            ),
+        ]
+
+    def __str__(self):
+        return f'v{self.pk} · {self.label}'
+
+    @classmethod
+    def active(cls):
+        """The active version, or None (then the default prompt in prompts.py is used)."""
+        return cls.objects.filter(is_active=True).first()
+
+
 class Exhibit(models.Model):
     """One photographed object and its biography."""
 
@@ -56,6 +98,14 @@ class Exhibit(models.Model):
 
     model_name = models.CharField(
         max_length=100, blank=True, help_text='Which Gemini model wrote the biography.'
+    )
+    prompt_version = models.ForeignKey(
+        SystemPrompt,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='exhibits',
+        help_text='Which system prompt wrote the biography. Empty = the default prompt in code.',
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

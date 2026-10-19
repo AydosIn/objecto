@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from PIL import Image
 
-from museum.models import Exhibit, GenerationLog
+from museum.models import Exhibit, GenerationLog, SystemPrompt
 from museum.services.gemini import BiographyResult, GenerationFailed, NotAnObject
 
 from .utils import TempMediaMixin, make_exhibit, make_image_file
@@ -80,6 +80,13 @@ class ExhibitCreateViewTests(TempMediaMixin, TestCase):
         self.assertEqual(exhibit.model_name, 'gemini-test-flash')
         log = GenerationLog.objects.get()
         self.assertEqual((log.user, log.kind, log.success), (self.user, 'create', True))
+
+    def test_exhibit_remembers_which_prompt_wrote_it(self):
+        prompt = SystemPrompt.active()
+        self.generate.return_value = replace(FAKE_BIOGRAPHY, prompt_version=prompt)
+        self.client.force_login(self.user)
+        self.client.post(self.url, {'image': make_image_file()})
+        self.assertEqual(Exhibit.objects.get().prompt_version, prompt)
 
     def test_gemini_gets_the_cleaned_jpeg_and_profile_hints(self):
         self.user.profile.display_name = 'Aydos'

@@ -3,6 +3,7 @@ import time
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
 
+from museum.models import SystemPrompt
 from museum.services.gemini import BiographyError, BiographyHints, generate_biography
 from museum.services.images import InvalidImage, process_upload
 
@@ -15,6 +16,9 @@ class Command(BaseCommand):
         parser.add_argument('--object-type', default='', help='Pretend the user renamed it to this')
         parser.add_argument('--owner-name', default='')
         parser.add_argument('--about-me', default='')
+        parser.add_argument(
+            '--prompt', type=int, help='Try this SystemPrompt version (e.g. 3) instead of the active one'
+        )
 
     def handle(self, *args, **options):
         try:
@@ -28,10 +32,18 @@ class Command(BaseCommand):
             owner_name=options['owner_name'],
             about_me=options['about_me'],
         )
-        self.stdout.write(f'Interviewing a {photo.width}x{photo.height} photo...\n')
+        prompt = None
+        if options['prompt']:
+            try:
+                prompt = SystemPrompt.objects.get(pk=options['prompt'])
+            except SystemPrompt.DoesNotExist:
+                raise CommandError(f"There is no system prompt v{options['prompt']}.")
+        used = prompt or SystemPrompt.active() or 'default prompt in code'
+
+        self.stdout.write(f'Interviewing a {photo.width}x{photo.height} photo with {used}...\n')
         started = time.monotonic()
         try:
-            bio = generate_biography(photo.content, photo.mime_type, hints)
+            bio = generate_biography(photo.content, photo.mime_type, hints, prompt=prompt)
         except BiographyError as error:
             raise CommandError(f'{error}\nUser would see: {error.user_message}')
         elapsed = time.monotonic() - started

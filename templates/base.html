@@ -1,59 +1,87 @@
 {% load static %}<!doctype html>
-<html lang="en">
+<html lang="en" class="{% block html_class %}{% endblock %}">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Object Biographies{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>document.documentElement.classList.add('js')</script>
+  <title>{% block title %}object biographies{% endblock %}</title>
+  <meta name="description" content="snap a photo of anything in your house and it tells you its life story, its trauma, its beef, and what it really thinks of you.">
+  <meta name="theme-color" content="#5b2bff">
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <link rel="icon" href="{% static 'img/icon-192.png' %}" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'img/icon-180.png' %}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="objects">
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
-<body>
-  <header class="site-header">
-    <div class="container site-header__inner">
-      <a class="brand" href="{% url 'landing' %}">
-        <span class="brand__mark" aria-hidden="true">❦</span>
-        Object Biographies
-      </a>
-      <nav class="site-nav" aria-label="Main">
-        {% if user.is_authenticated %}
-          <a class="btn btn--small" href="{% url 'museum:new' %}">Add an object</a>
-          <a class="site-nav__link" href="{% url 'profile' %}">{{ user.profile.display_name|default:user.email }}</a>
-          <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="site-nav__link site-nav__button">Log out</button>
-          </form>
-        {% else %}
-          <a class="site-nav__link" href="{% url 'login' %}">Log in</a>
-          <a class="btn btn--small" href="{% url 'signup' %}">Sign up</a>
-        {% endif %}
-      </nav>
-    </div>
+<body class="field--{% block field %}grape{% endblock %}">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3.5 8.5A2.5 2.5 0 0 1 6 6h1.8l1.4-2h5.6l1.4 2H18a2.5 2.5 0 0 1 2.5 2.5v8.5a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17z"/><circle cx="12" cy="12.5" r="3.6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.3-5.4M19.5 4.5v4.2h-4.2"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M14.8 5.2 18.8 9.2M4.5 19.5l1-4.5L16 4.5a1.4 1.4 0 0 1 2 0l1.5 1.5a1.4 1.4 0 0 1 0 2L9 18.5z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5v-2h5v2M6.5 6.5l1 13h9l1-13M10 10.5v5.5M14 10.5v5.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.2 12.4 2.6 2.6 5-5.4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.4v.1"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m5.5 9.5 6.5 6.5 6.5-6.5"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M8 7.5l4-4 4 4M7 11H6a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 18 11h-1"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h7M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5"/></symbol>
+  </svg>
+
+  <header class="app-bar">
+    <a class="brand" href="{% url 'landing' %}">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <path class="mark__bubble" d="M16 4C8.8 4 3 9 3 15.3c0 3.3 1.6 6.2 4.2 8.3L6 28.5l5.6-2.6c1.4.4 2.9.6 4.4.6 7.2 0 13-5 13-11.2S23.2 4 16 4z"/>
+        <ellipse class="mark__eye" cx="12" cy="14.5" rx="2" ry="2.6"/>
+        <ellipse class="mark__eye" cx="20" cy="14.5" rx="2" ry="2.6"/>
+      </svg>
+      <span class="brand__name">object biographies</span>
+    </a>
+    <nav class="app-bar__actions" aria-label="main">
+      {% if user.is_authenticated %}
+        <a class="round" href="{% url 'museum:new' %}" aria-label="add an object" title="add an object">
+          <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+        </a>
+        <a class="round round--quiet" href="{% url 'profile' %}" aria-label="your profile" title="your profile">{{ user.profile.display_name|default:user.email|first }}</a>
+      {% else %}
+        {% block bar_login %}<a class="app-bar__link" href="{% url 'login' %}">log in</a>{% endblock %}
+      {% endif %}
+    </nav>
   </header>
 
-  <main class="container site-main">
-    {% if messages %}
-      <div class="messages">
-        {% for message in messages %}
-          <p class="message message--{{ message.tags }}" role="status">{{ message }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
+  {% if messages %}
+    <div class="banners" role="status">
+      {% for message in messages %}
+        <button type="button" class="banner banner--{{ message.level_tag }}" data-banner>
+          <svg class="icon" aria-hidden="true"><use href="#{% if message.level_tag == 'error' %}i-alert{% else %}i-check{% endif %}"></use></svg>
+          <span>{{ message }}</span>
+        </button>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="page {% block page_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      The secret lives of household objects. No mugs were harmed.
-    </div>
-  </footer>
+  {% block footer %}
+    <footer class="site-footer">your stuff has been talking. we just wrote it down.</footer>
+  {% endblock %}
 
-  <div class="loading-overlay" data-loading-overlay hidden>
-    <div class="loading-overlay__card" role="status" aria-live="polite">
-      <div class="spinner" aria-hidden="true"></div>
-      <p class="loading-overlay__text" data-loading-text>Interviewing your object…</p>
-    </div>
+  {# The interview: shown by loading.js while Gemini writes the story #}
+  <div class="interview field--midnight" data-interview hidden>
+    <p class="interview__line" data-interview-line role="status" aria-live="polite">ok it's talking</p>
+    <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
   </div>
 
+  <script src="{% static 'js/app.js' %}" defer></script>
   <script src="{% static 'js/loading.js' %}" defer></script>
+  <script src="{% static 'js/dialogs.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -32,26 +32,30 @@ stains, scratches, labels, wear, where it sits and what is around it. Weave at l
 three visible details into the biography, ideally using one to explain the trauma. \
 Never invent a brand name you cannot read in the photo.
 
-Tone: dramatic, absurd and warm, like a nature documentary narrator who has become far \
-too emotionally invested. Keep it PG-13: no slurs, no sexual content, no gore, no real \
-tragedies or real people.
+Voice: write like a funny friend texting, not like a novelist. Everything lowercase, \
+including names. Short sentences, plain words, a little deadpan. One clear joke beats \
+three clever images: no similes stacked on similes, no strings of adjectives, no \
+"testament to", "tapestry", "hypnotic", "endless", "symphony" or "journey". Dramatic \
+about tiny things is the joke. Keep it PG-13: no slurs, no sexual content, no gore, no \
+real tragedies or real people.
 
-Length: 250 to 400 words across all fields together.
+Length: 120 to 220 words across all fields together. Every field is read on a phone, \
+one big screen at a time.
 
 Fields:
 - object_type: what it is, lowercase, 1 to 4 words ("ceramic mug", "office chair").
-- name: a first name with personality ("Gerald", "Dame Beatrice").
-- title: an epithet without the name ("Mug of the Third Shelf").
-- placard: one sentence of at most 15 words for the gallery card.
-- origin_story: 2 to 4 sentences. Where it was made and how it ended up here.
-- trauma: 2 to 3 sentences. One formative bad experience.
+- name: a first name with personality, lowercase ("gerald", "dame beatrice").
+- title: an epithet without the name, lowercase ("mug of the third shelf").
+- placard: one line of at most 10 words for the gallery card.
+- origin_story: 2 short sentences. Where it was made and how it ended up here.
+- trauma: 2 short sentences. One formative bad experience.
 - rivals: 1 or 2 rivals from the same household (appliances, other objects, pets), each \
-with a one-sentence reason.
-- hopes_and_fears: 2 to 3 sentences.
-- opinion_of_owner: 2 to 4 sentences in the object's own voice ("I" is the object, \
-"you" is the owner). Cheeky and teasing but never cruel: nothing about appearance, \
-body, intelligence, money or anything that could genuinely hurt. End on something \
-affectionate.
+with one short sentence of reason.
+- hopes_and_fears: 2 short sentences.
+- opinion_of_owner: a text message from the object, at most 35 words ("i" is the \
+object, "you" is the owner). Cheeky and teasing but never cruel: nothing about \
+appearance, body, intelligence, money or anything that could genuinely hurt. End on \
+something affectionate.
 
 ## Notes from the owner
 

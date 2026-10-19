@@ -1,39 +1,43 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Add an object · Object Biographies{% endblock %}
+{% block title %}show me the object{% endblock %}
+{% block field %}midnight{% endblock %}
 
 {% block content %}
-<section class="panel">
-  <h1>Add an object</h1>
-  <p class="panel__lead">
-    Photograph one object, up close and in good light. It will tell us everything.
-  </p>
+<form method="post" enctype="multipart/form-data" class="camera" data-upload-form data-loading="ok it's talking" novalidate>
+  {% csrf_token %}
+  <header class="page-head">
+    <h1 class="say">show me the object.</h1>
+    <p class="talk">one thing, up close, good light. it'll take it from there.</p>
+  </header>
 
-  <form method="post" enctype="multipart/form-data" class="form upload" data-upload-form data-loading="Interviewing your object…" novalidate>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+  {{ form.non_field_errors }}
+  <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}"
+         accept="image/*" class="visually-hidden" data-upload-input required
+         {% if form.image.errors %}aria-invalid="true" aria-describedby="image-errors"{% endif %}>
+  <label class="viewfinder" for="{{ form.image.id_for_label }}">
+    <span class="viewfinder__corner" aria-hidden="true"></span>
+    <span class="viewfinder__corner" aria-hidden="true"></span>
+    <span class="viewfinder__corner" aria-hidden="true"></span>
+    <span class="viewfinder__corner" aria-hidden="true"></span>
+    <span class="viewfinder__prompt" data-upload-prompt>
+      <svg class="icon" aria-hidden="true"><use href="#i-camera"></use></svg>
+      tap to snap or pick a photo
+      <span class="small" data-upload-hint>jpeg, png, webp or heic, up to 10 mb</span>
+    </span>
+  </label>
 
-    <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}"
-           accept="image/*" class="visually-hidden" data-upload-input required
-           {% if form.image.errors %}aria-invalid="true" aria-describedby="image-errors"{% endif %}>
-    <label class="dropzone" for="{{ form.image.id_for_label }}">
-      <img class="dropzone__preview" alt="Preview of your photo" data-upload-preview hidden>
-      <span class="dropzone__prompt" data-upload-prompt>
-        <span class="dropzone__icon" aria-hidden="true">◉</span>
-        Take or choose a photo
-      </span>
-      <span class="dropzone__hint" data-upload-hint>JPEG, PNG, WebP or HEIC · up to 10 MB</span>
-    </label>
-    <p class="client-error" data-upload-error role="alert" hidden></p>
-    {% if form.image.errors %}
-      <div id="image-errors">{{ form.image.errors }}</div>
-    {% endif %}
+  <p class="camera-note camera-note--error" data-upload-error role="alert" hidden></p>
+  {% if form.image.errors %}
+    <div class="camera-note camera-note--error" id="image-errors">{{ form.image.errors }}</div>
+  {% endif %}
 
-    <button type="submit" class="btn btn--block">Interview this object</button>
-  </form>
-</section>
-
+  <div class="shutter-row">
+    <button type="submit" class="shutter" data-shutter aria-describedby="shutter-label"><span></span></button>
+    <p class="shutter-label" id="shutter-label" data-shutter-label>interview it</p>
+  </div>
+</form>
 {% endblock %}
 
 {% block scripts %}

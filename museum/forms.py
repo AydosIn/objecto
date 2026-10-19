@@ -8,9 +8,9 @@ class ExhibitUploadForm(forms.Form):
     # A plain FileField: services/images.py does all the image checks in one place.
     # No `capture` attribute, so phones offer both "Take Photo" and "Photo Library".
     image = forms.FileField(
-        label='Photo of the object',
+        label='photo of the object',
         widget=forms.FileInput(attrs={'accept': 'image/*'}),
-        error_messages={'required': 'Choose or take a photo first.'},
+        error_messages={'required': 'pick or snap a photo first.'},
     )
 
     def clean_image(self):
@@ -25,12 +25,14 @@ class ExhibitUploadForm(forms.Form):
 
 class RenameForm(forms.Form):
     object_type = forms.CharField(
-        label='What is it really?',
+        label='it\'s actually a',
         max_length=100,
         strip=True,
         error_messages={
-            'required': 'Tell us what the object really is.',
-            'max_length': 'Keep it under 100 characters.',
+            'required': 'tell us what it really is.',
+            'max_length': 'keep it under 100 characters.',
         },
-        widget=forms.TextInput(attrs={'placeholder': 'e.g. glass vase', 'autocomplete': 'off'}),
+        widget=forms.TextInput(
+            attrs={'placeholder': 'glass vase', 'autocomplete': 'off', 'autofocus': True}
+        ),
     )

@@ -1,19 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Delete {{ exhibit.name }} · Object Biographies{% endblock %}
+{% block title %}delete {{ exhibit.name|lower }}?{% endblock %}
+{% block field %}midnight{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
 
 {% block content %}
-<section class="panel">
-  <img class="panel__thumb" src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}">
-  <h1>Remove {{ exhibit.name }} from the museum?</h1>
-  <p class="panel__lead">
-    {{ exhibit.name }}, {{ exhibit.title }}, and its photo will be deleted for good.
-    This can't be undone.
-  </p>
-  <form method="post" class="confirm-actions">
-    {% csrf_token %}
-    <button type="submit" class="btn btn--danger">Delete forever</button>
-    <a class="btn btn--ghost" href="{{ exhibit.get_absolute_url }}">Keep it</a>
-  </form>
-</section>
+<header class="page-head">
+  <figure class="print"><img src="{{ exhibit.image.url }}" alt="{{ exhibit.name }}, the {{ exhibit.object_type }}"></figure>
+  <h1 class="shout">delete {{ exhibit.name|lower }}?</h1>
+  <p class="talk">{{ exhibit.title|lower }}, its whole story and its photo, gone for good. no undo.</p>
+</header>
+<form method="post" class="btn-row">
+  {% csrf_token %}
+  <button type="submit" class="btn btn--danger btn--block">delete</button>
+  <a class="btn btn--ghost btn--block" href="{{ exhibit.get_absolute_url }}">keep it</a>
+</form>
 {% endblock %}

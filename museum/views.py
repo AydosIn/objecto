@@ -14,6 +14,7 @@ from django.views.generic.detail import SingleObjectMixin
 
 from .forms import ExhibitUploadForm, RenameForm
 from .models import Exhibit, GenerationLog
+from .services.aura import RAMP, aura_for, slide_fields
 from .services.gemini import BiographyError, BiographyHints, generate_biography
 
 
@@ -84,12 +85,19 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
         return redirect(exhibit)
 
 
+def recap_colours(exhibit):
+    """The exhibit's aura (sampled from its photo) and one ramp colour per recap slide."""
+    aura = aura_for(exhibit.image)
+    return {'aura': aura, 'fields': slide_fields(aura if aura in RAMP else RAMP[0], len(RAMP))}
+
+
 class ExhibitDetailView(OwnedExhibitMixin, DetailView):
     template_name = 'museum/exhibit_detail.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['rename_form'] = RenameForm(initial={'object_type': self.object.object_type})
+        context.update(recap_colours(self.object))
         return context
 
 
@@ -106,7 +114,7 @@ class RewriteBiographyView(OwnedExhibitMixin, SingleObjectMixin, View):
             with exhibit.image.open('rb') as stored:
                 image_bytes = stored.read()
         except OSError:
-            messages.error(self.request, "This exhibit's photo is missing, so it can't be rewritten.")
+            messages.error(self.request, "this one's photo is missing, so it can't be rewritten.")
             return redirect(exhibit)
 
         mime_type = mimetypes.guess_type(exhibit.image.name)[0] or 'image/jpeg'
@@ -153,11 +161,14 @@ class ExhibitRenameView(RewriteBiographyView):
         return self.rewrite(exhibit, form.cleaned_data['object_type'])
 
     def success_message(self, exhibit):
-        return f'Apologies to the {exhibit.object_type}. Its real story has been written.'
+        return f'sorry, {exhibit.object_type}. your real story is up.'
 
 
 class ExhibitDeleteView(OwnedExhibitMixin, DeleteView):
     template_name = 'museum/exhibit_confirm_delete.html'
+
+    def get_context_data(self, **kwargs):
+        return {**super().get_context_data(**kwargs), **recap_colours(self.object)}
     success_url = reverse_lazy('landing')  # becomes the museum grid in Phase 7
 
     def form_valid(self, form):

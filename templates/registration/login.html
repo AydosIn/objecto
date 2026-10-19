@@ -1,20 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Log in · Object Biographies{% endblock %}
+{% block title %}log in{% endblock %}
+{% block field %}grape{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
 
 {% block content %}
-<section class="panel">
-  <h1>Welcome back</h1>
-  <p class="panel__lead">Your objects have been talking about you.</p>
-  <form method="post" class="form" novalidate>
-    {% csrf_token %}
-    {{ form }}
-    <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit" class="btn btn--block">Log in</button>
-  </form>
-  <p class="panel__links">
-    <a href="{% url 'password_reset' %}">Forgot your password?</a><br>
-    New here? <a href="{% url 'signup' %}">Open your museum</a>
-  </p>
-</section>
+<header class="page-head">
+  <h1 class="shout">welcome back.</h1>
+  <p class="talk">your stuff kept talking while you were gone.</p>
+</header>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% include "includes/form_group.html" with form=form %}
+  <input type="hidden" name="next" value="{{ next }}">
+  <div class="btn-row">
+    <button type="submit" class="btn btn--block">log in</button>
+    <a class="btn btn--ghost btn--block" href="{% url 'signup' %}">new here? make an account</a>
+  </div>
+</form>
+<p class="small after-form"><a class="text-link" href="{% url 'password_reset' %}">forgot your password?</a></p>
 {% endblock %}

@@ -15,7 +15,7 @@ class UniqueEmailMixin:
     def clean_email(self):
         email = self.cleaned_data['email'].lower()
         if User.objects.filter(email__iexact=email).exists():
-            raise ValidationError('An account with this email already exists.')
+            raise ValidationError("there's already an account with this email.")
         return email
 
 

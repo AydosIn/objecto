@@ -59,7 +59,7 @@ class SignupTests(TestCase):
         User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
         response = self.post(email='GERALD@mail.com')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'An account with this email already exists.')
+        self.assertContains(response, 'there&#x27;s already an account with this email.')
         self.assertEqual(User.objects.count(), 1)
 
     def test_mismatched_passwords_are_rejected(self):
@@ -106,6 +106,12 @@ class ProfileTests(TestCase):
     def test_requires_login(self):
         response = self.client.get(self.url)
         self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
+
+    def test_profile_page_has_log_out(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertContains(response, f'action="{reverse("logout")}"')
+        self.assertContains(response, 'gerald@mail.com')
 
     def test_update_profile(self):
         self.client.force_login(self.user)
@@ -188,3 +194,17 @@ class AdminTests(TestCase):
         self.client.force_login(visitor)
         response = self.client.get(reverse('admin:accounts_user_changelist'))
         self.assertEqual(response.status_code, 302)
+
+
+class LandingPageTests(TestCase):
+    def test_visitor_sees_sign_up(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, 'this is gerald.')
+        self.assertContains(response, reverse('signup'))
+
+    def test_logged_in_user_sees_add_object(self):
+        user = User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
+        self.client.force_login(user)
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, reverse('museum:new'))
+        self.assertNotContains(response, f'href="{reverse("signup")}"')

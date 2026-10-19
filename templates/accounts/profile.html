@@ -1,18 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %}Your profile · Object Biographies{% endblock %}
+{% block title %}you{% endblock %}
+{% block field %}mint{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
 
 {% block content %}
-<section class="panel">
-  <h1>Your profile</h1>
-  <p class="panel__lead">
-    Signed in as <strong>{{ user.email }}</strong>. These details are optional;
-    they help your objects form a more personal opinion of you.
-  </p>
-  <form method="post" class="form" novalidate>
+<header class="page-head">
+  <span class="me" aria-hidden="true">{{ user.profile.display_name|default:user.email|first }}</span>
+  <h1 class="shout">it's you.</h1>
+  <p class="talk">{{ user.email }}. your stuff reads this before it judges you.</p>
+</header>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% include "includes/form_group.html" with form=form %}
+  <div class="btn-row">
+    <button type="submit" class="btn btn--block">save</button>
+  </div>
+</form>
+
+<div class="card card--spaced">
+  <form method="post" action="{% url 'logout' %}">
     {% csrf_token %}
-    {{ form }}
-    <button type="submit" class="btn btn--block">Save profile</button>
+    <button type="submit" class="row row-action row-action--danger">
+      <span class="glyph" style="--g:#e5133a" aria-hidden="true"><svg class="icon"><use href="#i-logout"></use></svg></span>
+      log out
+    </button>
   </form>
-</section>
+</div>
 {% endblock %}

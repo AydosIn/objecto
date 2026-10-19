@@ -32,7 +32,7 @@ class ProcessedImage:
 def process_upload(upload) -> ProcessedImage:
     """Validate and clean an uploaded file (anything with .size, .read() and .seek())."""
     if upload.size > MAX_UPLOAD_BYTES:
-        raise InvalidImage('That photo is over 10 MB. Try a smaller one.')
+        raise InvalidImage('that photo is over 10 mb. try a smaller one.')
 
     # verify() checks the file is a real, undamaged image without decoding all of it.
     # It leaves the image unusable, so the file is opened a second time below.
@@ -42,10 +42,10 @@ def process_upload(upload) -> ProcessedImage:
             probe.verify()
             image_format = probe.format
     except (UnidentifiedImageError, Image.DecompressionBombError, OSError, SyntaxError, ValueError):
-        raise InvalidImage("That file isn't an image we can read.")
+        raise InvalidImage("that file isn't a photo we can read.")
 
     if image_format not in ALLOWED_FORMATS:
-        raise InvalidImage('Please upload a JPEG, PNG, WebP or HEIC photo.')
+        raise InvalidImage('try a jpeg, png, webp or heic photo.')
 
     try:
         upload.seek(0)
@@ -61,7 +61,7 @@ def process_upload(upload) -> ProcessedImage:
             output = io.BytesIO()
             image.save(output, format='JPEG', quality=JPEG_QUALITY, optimize=True)
     except (Image.DecompressionBombError, OSError, ValueError):
-        raise InvalidImage("That file isn't an image we can read.")
+        raise InvalidImage("that file isn't a photo we can read.")
 
     return ProcessedImage(
         content=output.getvalue(),

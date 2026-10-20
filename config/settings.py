@@ -148,6 +148,28 @@ WHITENOISE_USE_FINDERS = True
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# With the R2 keys set (always on Vercel, which can't keep files), photos go to a
+# private Cloudflare R2 bucket and pages link to them with signed, expiring URLs.
+# Without them, photos stay in MEDIA_ROOT.
+R2_KEYS = ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME')
+if all(env(key, default='') for key in R2_KEYS):
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': {
+                'bucket_name': env('R2_BUCKET_NAME'),
+                'endpoint_url': f"https://{env('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+                'access_key': env('R2_ACCESS_KEY_ID'),
+                'secret_key': env('R2_SECRET_ACCESS_KEY'),
+                'region_name': 'auto',
+                'signature_version': 's3v4',
+                'querystring_auth': True,
+                'file_overwrite': False,
+            },
+        },
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    }
+
 
 # Gemini (used from Phase 5 on)
 

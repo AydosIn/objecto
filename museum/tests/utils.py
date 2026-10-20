@@ -34,12 +34,18 @@ def make_exhibit(owner, **fields):
 
 
 class TempMediaMixin:
-    """Uploads in tests go to a throwaway folder instead of the real media/."""
+    """Uploads in tests go to a throwaway folder instead of the real media/ or R2 bucket."""
 
     @classmethod
     def setUpClass(cls):
         cls._media_root = tempfile.mkdtemp()
-        cls._media_override = override_settings(MEDIA_ROOT=cls._media_root)
+        cls._media_override = override_settings(
+            MEDIA_ROOT=cls._media_root,
+            STORAGES={
+                'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+                'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+            },
+        )
         cls._media_override.enable()
         super().setUpClass()
 

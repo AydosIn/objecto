@@ -129,3 +129,75 @@ class LimitInViewsTests(TempMediaMixin, TestCase):
         self.assertNotContains(response, 'left today')
         self.client.post(reverse('museum:new'), {'image': make_image_file()})
         self.generate.assert_called_once()
+
+
+@override_settings(DAILY_GENERATION_LIMIT=5, SITE_DAILY_GENERATION_LIMIT=3)
+class SiteLimitTests(TempMediaMixin, TestCase):
+    """Many accounts together can't go past the site's daily total."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
+        self.client.force_login(self.user)
+        patcher = mock.patch('museum.views.generate_biography', return_value=FAKE_BIOGRAPHY)
+        self.generate = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def fill_site(self):
+        for n in range(3):
+            log(User.objects.create_user(email=f'other{n}@mail.com', password=PASSWORD))
+
+    def test_upload_blocked_when_the_site_is_full(self):
+        self.fill_site()
+        response = self.client.post(reverse('museum:new'), {'image': make_image_file()})
+        self.assertContains(response, 'the museum is full for today')
+        self.generate.assert_not_called()
+
+    def test_reroll_blocked_when_the_site_is_full(self):
+        exhibit = make_exhibit(self.user)
+        self.fill_site()
+        response = self.client.post(reverse('museum:regenerate', args=[exhibit.pk]), follow=True)
+        messages = [str(m) for m in response.context['messages']]
+        self.assertTrue(any('the museum is full for today' in m for m in messages))
+        self.generate.assert_not_called()
+
+    def test_google_errors_do_not_fill_the_site(self):
+        for n in range(3):
+            other = User.objects.create_user(email=f'other{n}@mail.com', password=PASSWORD)
+            log(other, success=False, error='Gemini API error 503: overloaded')
+        self.client.post(reverse('museum:new'), {'image': make_image_file()})
+        self.generate.assert_called_once()
+
+    def test_staff_can_still_interview_when_the_site_is_full(self):
+        self.fill_site()
+        self.client.force_login(User.objects.create_superuser(email='curator@mail.com', password=PASSWORD))
+        self.client.post(reverse('museum:new'), {'image': make_image_file()})
+        self.generate.assert_called_once()
+
+
+@override_settings(DAILY_GENERATION_LIMIT=5)
+class QuotaLockTests(TempMediaMixin, TestCase):
+    """Parallel requests can't all pass the limit check: each interview checks the limit
+    only after taking the user's row lock. (SQLite can't lock rows, so the real race is
+    checked against PostgreSQL by hand; these tests pin down the order of the calls.)"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
+        self.client.force_login(self.user)
+        patcher = mock.patch('museum.views.generate_biography', return_value=FAKE_BIOGRAPHY)
+        self.generate = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_upload_locks_before_checking_the_limit(self):
+        calls = []
+        with mock.patch('museum.views.lock_quota', side_effect=lambda u: calls.append('lock')), \
+                mock.patch('museum.views.limit_reached', side_effect=lambda u: calls.append('check')):
+            self.client.post(reverse('museum:new'), {'image': make_image_file()})
+        self.assertEqual(calls, ['lock', 'check'])
+
+    def test_reroll_locks_before_checking_the_limit(self):
+        exhibit = make_exhibit(self.user)
+        calls = []
+        with mock.patch('museum.views.lock_quota', side_effect=lambda u: calls.append('lock')), \
+                mock.patch('museum.views.limit_reached', side_effect=lambda u: calls.append('check')):
+            self.client.post(reverse('museum:regenerate', args=[exhibit.pk]))
+        self.assertEqual(calls, ['lock', 'check'])

@@ -68,6 +68,8 @@ class Profile(models.Model):
         blank=True,
         help_text='Optional, up to 300 characters. Objects read this before forming their opinion of you.',
     )
+    # Limits how many accounts one network can make per day (accounts/security.py).
+    signup_ip = models.GenericIPAddressField('signup IP', null=True, blank=True, editable=False)
 
     def __str__(self):
         return self.display_name or self.user.email

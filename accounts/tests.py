@@ -1,11 +1,14 @@
+import datetime
 import re
 
 from django.contrib.auth import authenticate, get_user_model
 from django.core import mail
-from django.test import TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Profile
+from .security import client_ip
 
 User = get_user_model()
 PASSWORD = 's3cret-mug'
@@ -29,7 +32,9 @@ class UserModelTests(TestCase):
 
     def test_login_email_is_case_insensitive(self):
         User.objects.create_user(email='gerald@mail.com', password='s3cret-mug')
-        user = authenticate(email='GERALD@mail.com', password='s3cret-mug')
+        # django-axes needs the request to know who is trying.
+        request = RequestFactory().post('/accounts/login/')
+        user = authenticate(request, username='GERALD@mail.com', password='s3cret-mug')
         self.assertIsNotNone(user)
 
     def test_new_user_gets_a_profile(self):
@@ -207,3 +212,105 @@ class LandingPageTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse('landing'))
         self.assertRedirects(response, reverse('museum:index'))
+
+
+class LoginLockoutTests(TestCase):
+    """django-axes: 5 wrong passwords for one email from one IP locks that pair out."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email='gerald@mail.com', password=PASSWORD)
+
+    def try_login(self, email='gerald@mail.com', password='wrong-password', ip='203.0.113.7', url=None):
+        return self.client.post(
+            url or reverse('login'),
+            {'username': email, 'password': password},
+            HTTP_X_VERCEL_FORWARDED_FOR=ip,
+        )
+
+    def test_fifth_wrong_password_locks_the_login(self):
+        for _ in range(4):
+            self.assertEqual(self.try_login().status_code, 200)
+        response = self.try_login()
+        self.assertEqual(response.status_code, 429)
+        self.assertContains(response, 'too many tries', status_code=429)
+
+    def test_right_password_is_refused_while_locked(self):
+        for _ in range(5):
+            self.try_login()
+        response = self.try_login(password=PASSWORD)
+        self.assertEqual(response.status_code, 429)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_changing_the_email_case_does_not_reset_the_count(self):
+        for email in ['gerald@mail.com', 'GERALD@mail.com', 'Gerald@Mail.com', 'gerald@MAIL.com']:
+            self.try_login(email=email)
+        self.assertEqual(self.try_login(email='GeRaLd@mail.com').status_code, 429)
+
+    def test_lockout_is_per_ip(self):
+        """Someone else on another network can still log in to their own account."""
+        for _ in range(5):
+            self.try_login()
+        response = self.try_login(password=PASSWORD, ip='198.51.100.20')
+        self.assertRedirects(response, reverse('museum:index'))
+
+    def test_success_resets_the_count(self):
+        for _ in range(4):
+            self.try_login()
+        self.try_login(password=PASSWORD)
+        self.client.logout()
+        for _ in range(4):
+            self.assertEqual(self.try_login().status_code, 200)
+
+    def test_admin_login_is_protected_too(self):
+        User.objects.create_superuser(email='curator@mail.com', password=PASSWORD)
+        url = reverse('admin:login')
+        for _ in range(5):
+            response = self.try_login(email='curator@mail.com', url=url)
+        self.assertEqual(response.status_code, 429)
+
+
+class SignupLimitTests(TestCase):
+    def sign_up(self, n, ip='203.0.113.7'):
+        return self.client.post(
+            reverse('signup'),
+            {'email': f'gerald{n}@mail.com', 'password1': PASSWORD, 'password2': PASSWORD},
+            HTTP_X_VERCEL_FORWARDED_FOR=ip,
+        )
+
+    def test_signup_remembers_the_ip(self):
+        self.sign_up(1)
+        self.assertEqual(User.objects.get(email='gerald1@mail.com').profile.signup_ip, '203.0.113.7')
+
+    @override_settings(SIGNUPS_PER_IP_PER_DAY=2)
+    def test_too_many_signups_from_one_ip_are_refused(self):
+        for n in range(2):
+            self.sign_up(n)
+            self.client.logout()
+        response = self.sign_up(3)
+        self.assertContains(response, 'too many new accounts from this network today')
+        self.assertFalse(User.objects.filter(email='gerald3@mail.com').exists())
+
+    @override_settings(SIGNUPS_PER_IP_PER_DAY=2)
+    def test_other_networks_and_old_signups_are_not_counted(self):
+        for n in range(2):
+            self.sign_up(n)
+            self.client.logout()
+        User.objects.update(date_joined=timezone.now() - datetime.timedelta(hours=25))
+        self.assertRedirects(self.sign_up(3), reverse('museum:index'))
+        self.client.logout()
+        self.assertRedirects(self.sign_up(4, ip='198.51.100.20'), reverse('museum:index'))
+
+
+class ClientIpTests(TestCase):
+    def test_uses_vercels_header_when_present(self):
+        request = RequestFactory().get('/', HTTP_X_VERCEL_FORWARDED_FOR='203.0.113.7', REMOTE_ADDR='10.0.0.1')
+        self.assertEqual(client_ip(request), '203.0.113.7')
+
+    def test_falls_back_to_the_connection_address(self):
+        request = RequestFactory().get('/', REMOTE_ADDR='127.0.0.1')
+        self.assertEqual(client_ip(request), '127.0.0.1')
+
+    def test_plain_x_forwarded_for_is_ignored(self):
+        """Anyone can send X-Forwarded-For, so it must not change the IP."""
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='1.2.3.4', REMOTE_ADDR='127.0.0.1')
+        self.assertEqual(client_ip(request), '127.0.0.1')

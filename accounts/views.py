@@ -9,6 +9,7 @@ from django.views.generic import CreateView, UpdateView
 
 from .forms import ProfileForm, SignupForm
 from .models import Profile
+from .security import client_ip, signup_limit_reached
 
 
 class SignupView(CreateView):
@@ -21,8 +22,18 @@ class SignupView(CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        # Every account gets its own daily interviews, so unlimited signups would mean
+        # unlimited Gemini calls. Cap how many accounts one network makes per day.
+        ip = client_ip(self.request)
+        if signup_limit_reached(ip):
+            form.add_error(None, 'too many new accounts from this network today. try again tomorrow.')
+            return self.form_invalid(form)
+
         user = form.save()
-        login(self.request, user)
+        Profile.objects.filter(user=user).update(signup_ip=ip or None)
+        # Named, because with django-axes there are two backends; the new user's
+        # password was just set, so there is nothing for axes to check.
+        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
         messages.success(self.request, "you're in. go find something to interview.")
         return redirect(settings.LOGIN_REDIRECT_URL)
 

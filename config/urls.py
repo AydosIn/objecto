@@ -11,8 +11,12 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('museum/', include('museum.urls')),
     # Before admin.site.urls, which would otherwise swallow this path.
-    path('admin/analytics/', admin.site.admin_view(AnalyticsView.as_view()), name='admin-analytics'),
-    path('admin/', admin.site.urls),
+    path(
+        f'{settings.ADMIN_URL}analytics/',
+        admin.site.admin_view(AnalyticsView.as_view()),
+        name='admin-analytics',
+    ),
+    path(settings.ADMIN_URL, admin.site.urls),
 ]
 
 if settings.DEBUG:

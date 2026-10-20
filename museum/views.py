@@ -16,7 +16,7 @@ from .forms import ExhibitUploadForm, RenameForm
 from .models import Exhibit, GenerationLog
 from .services.aura import RAMP, aura_from_bytes, aura_of, slide_fields
 from .services.gemini import BiographyError, BiographyHints, generate_biography
-from .services.limits import limit_message, quota_context, remaining_today
+from .services.limits import limit_reached, lock_quota, quota_context
 
 
 def hints_for(user, object_type=''):
@@ -95,21 +95,24 @@ class ExhibitCreateView(LoginRequiredMixin, FormView):
         user = self.request.user
         photo = form.processed_image
 
-        # Out of interviews for today: stop before Gemini, so it costs nothing.
-        if remaining_today(user) == 0:
-            form.add_error('image', limit_message())
-            return self.form_invalid(form)
-
-        # Gemini first: if it fails, nothing (no row, no file) has been saved yet.
-        started = time.monotonic()
-        try:
-            biography = generate_biography(photo.content, photo.mime_type, hints_for(user))
-        except BiographyError as error:
-            log_generation(user, GenerationLog.Kind.CREATE, started, error=error)
-            form.add_error('image', error.user_message)
-            return self.form_invalid(form)
-
+        # The whole interview holds the quota lock, so parallel uploads can't all pass
+        # the limit check before any of them is logged.
         with transaction.atomic():
+            lock_quota(user)
+            # Out of interviews: stop before Gemini, so it costs nothing.
+            if message := limit_reached(user):
+                form.add_error('image', message)
+                return self.form_invalid(form)
+
+            # Gemini first: if it fails, nothing (no exhibit, no file) has been saved yet.
+            started = time.monotonic()
+            try:
+                biography = generate_biography(photo.content, photo.mime_type, hints_for(user))
+            except BiographyError as error:
+                log_generation(user, GenerationLog.Kind.CREATE, started, error=error)
+                form.add_error('image', error.user_message)
+                return self.form_invalid(form)
+
             exhibit = Exhibit(
                 owner=user, aura=aura_from_bytes(photo.content).slug, **biography.as_model_fields()
             )
@@ -149,9 +152,15 @@ class RewriteBiographyView(OwnedExhibitMixin, SingleObjectMixin, View):
     kind = None
 
     def rewrite(self, exhibit, object_type):
+        # Holds the quota lock for the whole interview, like ExhibitCreateView.
+        with transaction.atomic():
+            lock_quota(self.request.user)
+            return self._rewrite(exhibit, object_type)
+
+    def _rewrite(self, exhibit, object_type):
         user = self.request.user
-        if remaining_today(user) == 0:
-            messages.error(self.request, limit_message())
+        if message := limit_reached(user):
+            messages.error(self.request, message)
             return redirect(exhibit)
         try:
             with exhibit.image.open('rb') as stored:
@@ -169,13 +178,12 @@ class RewriteBiographyView(OwnedExhibitMixin, SingleObjectMixin, View):
             messages.error(self.request, error.user_message)
             return redirect(exhibit)
 
-        with transaction.atomic():
-            for field, value in biography.as_model_fields().items():
-                setattr(exhibit, field, value)
-            # Whatever Gemini calls it, the user's wording wins.
-            exhibit.object_type = object_type
-            exhibit.save()
-            log_generation(user, self.kind, started, biography=biography, exhibit=exhibit)
+        for field, value in biography.as_model_fields().items():
+            setattr(exhibit, field, value)
+        # Whatever Gemini calls it, the user's wording wins.
+        exhibit.object_type = object_type
+        exhibit.save()
+        log_generation(user, self.kind, started, biography=biography, exhibit=exhibit)
         messages.success(self.request, self.success_message(exhibit))
         return redirect(exhibit)
 

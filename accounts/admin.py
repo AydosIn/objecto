@@ -8,6 +8,7 @@ from .models import Profile, User
 class ProfileInline(admin.StackedInline):
     model = Profile
     can_delete = False
+    readonly_fields = ('signup_ip',)
 
 
 @admin.register(User)
@@ -52,6 +53,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'display_name', 'about_me')
+    list_display = ('user', 'display_name', 'about_me', 'signup_ip')
     list_select_related = ('user',)
-    search_fields = ('user__email', 'display_name')
+    readonly_fields = ('signup_ip',)
+    search_fields = ('user__email', 'display_name', 'signup_ip')

@@ -8,95 +8,12 @@
 
 {% block content %}
 <div class="recap" data-recap>
-  <nav class="progress progress--static" aria-label="{{ exhibit.name|lower }}'s story" data-progress></nav>
-  <div class="story-head story-head--fixed">
-    <img src="{{ exhibit.image.url }}" alt="">
-    <span>{{ exhibit.name|lower }} <span class="story-head__note">{{ exhibit.object_type|lower }}</span></span>
-  </div>
-
-  <section class="slide field--{{ fields.0.slug }}" data-slide aria-label="meet {{ exhibit.name|lower }}">
-    <div class="slide__inner slide__inner--split">
-      <h1 class="shout" data-split>{{ exhibit.name|lower }}</h1>
-      <p class="talk" data-reveal>{{ exhibit.title|lower }}</p>
-      <div class="chips" data-reveal>
-        <span class="chip chip--soft"><span class="swatch" style="--sw: {{ aura.hex }}"></span>aura: {{ aura.name }}</span>
-      </div>
-      <figure class="print print--hero">
-        <img src="{{ exhibit.image.url }}" alt="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}">
-      </figure>
-      <p class="hint" data-reveal style="--i:6"><svg class="icon" aria-hidden="true"><use href="#i-down"></use></svg>tap or scroll for the lore</p>
-    </div>
-  </section>
-
-  <section class="slide field--{{ fields.1.slug }}" data-slide aria-labelledby="s-origin">
-    <div class="slide__inner">
-      <h2 class="say" id="s-origin" >where it came from</h2>
-      <div class="talk" data-reveal style="--i:4">{{ exhibit.origin_story|lower|linebreaks }}</div>
-    </div>
-  </section>
-
-  <section class="slide field--{{ fields.2.slug }}" data-slide aria-labelledby="s-trauma">
-    <div class="slide__inner">
-      <h2 class="say" id="s-trauma" >the trauma</h2>
-      <div class="talk" data-reveal style="--i:4">{{ exhibit.trauma|lower|linebreaks }}</div>
-    </div>
-  </section>
-
-  {% if exhibit.rivals %}
-    <section class="slide field--{{ fields.3.slug }}" data-slide aria-labelledby="s-beef">
-      <div class="slide__inner">
-        <h2 class="say" id="s-beef" >the beef</h2>
-        <ul class="rivals">
-          {% for rival in exhibit.rivals %}
-            <li class="rival" style="--i:{{ forloop.counter|add:forloop.counter|add:1 }}">
-              <p class="rival__name say"><span class="vs">vs</span>{{ rival.name|lower }}</p>
-              <p class="talk">{{ rival.reason|lower }}</p>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </section>
-  {% endif %}
-
-  <section class="slide field--{{ fields.4.slug }}" data-slide aria-labelledby="s-hopes">
-    <div class="slide__inner">
-      <h2 class="say" id="s-hopes" >hopes and fears</h2>
-      <div class="talk" data-reveal style="--i:4">{{ exhibit.hopes_and_fears|lower|linebreaks }}</div>
-    </div>
-  </section>
-
-  <section class="slide field--{{ fields.5.slug }}" data-slide aria-labelledby="s-opinion">
-    <div class="slide__inner">
-      <h2 class="say" id="s-opinion" >what it thinks of you</h2>
-      <div class="thread">
-        <p class="thread__from" data-reveal><img src="{{ exhibit.image.url }}" alt="">{{ exhibit.name|lower }}</p>
-        <div class="thread__stack">
-          <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="bubble">{{ exhibit.opinion_of_owner|lower|linebreaks }}</div>
-        </div>
-      </div>
-    </div>
-  </section>
+  {% include "museum/includes/story.html" with photo_url=exhibit.image.url opinion_heading="what it thinks of you" %}
 
   <section class="slide field--midnight" data-slide aria-labelledby="s-card">
     <div class="slide__inner wrap-up">
       <h2 class="visually-hidden" id="s-card">{{ exhibit.name|lower }}'s card</h2>
-      <article class="placard field--{{ fields.0.slug }}">
-        <div class="placard__top">
-          <img src="{{ exhibit.image.url }}" alt="">
-          <div>
-            <p class="placard__name">{{ exhibit.name|lower }}</p>
-            <p class="small">{{ exhibit.title|lower }}</p>
-          </div>
-        </div>
-        <blockquote class="placard__quote">{{ exhibit.placard|lower }}</blockquote>
-        <dl class="facts">
-          <div><dt>it's a</dt><dd>{{ exhibit.object_type|lower }}</dd></div>
-          <div><dt>aura</dt><dd>{{ aura.name }}</dd></div>
-          {% if exhibit.rivals %}<div><dt>nemesis</dt><dd>{{ exhibit.rivals.0.name|lower }}</dd></div>{% endif %}
-          <div><dt>in your museum since</dt><dd>{{ exhibit.created_at|date:"j M Y"|lower }}</dd></div>
-        </dl>
-      </article>
+      {% include "museum/includes/placard.html" with photo_url=exhibit.image.url %}
 
       <div class="card" data-reveal style="--i:6">
         <form method="post" action="{% url 'museum:regenerate' exhibit.pk %}"
@@ -114,12 +31,12 @@
           wrong object? rename it
           <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
         </a>
-        <button type="button" class="row row-action" data-share hidden
-                data-share-text="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}: “{{ exhibit.placard|lower }}”">
+        <a class="row row-action" href="?share=1#share-sheet" data-open-dialog="share-sheet">
           <span class="glyph" style="--g:#1fa2ff; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-share"></use></svg></span>
-          share the card
+          share or save as pdf
+          {% if exhibit.is_shared %}<span class="row-action__meta">link on</span>{% endif %}
           <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
-        </button>
+        </a>
         <a class="row row-action" href="{% url 'museum:index' %}">
           <span class="glyph" style="--g:#ffd43b; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-grid"></use></svg></span>
           back to your museum
@@ -153,6 +70,29 @@
   </form>
 </dialog>
 
+<dialog class="sheet" id="share-sheet" aria-labelledby="share-title"{% if share_open %} open{% endif %}>
+  <div class="sheet__grabber" aria-hidden="true"></div>
+  <div class="sheet__body">
+    <h2 class="sheet__title" id="share-title">share {{ exhibit.name|lower }}</h2>
+    {% if exhibit.is_shared %}
+      <p class="sheet__text">anyone with this link can read {{ exhibit.name|lower }}'s whole story, including what it thinks of you. nothing else in your museum.</p>
+      {% include "museum/includes/share_rows.html" with copy=True %}
+      <form method="post" action="{% url 'museum:unshare' exhibit.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--ghost btn--block">delete the link</button>
+      </form>
+    {% else %}
+      <p class="sheet__text">save it as a pdf, or make a link to send. a link shows {{ exhibit.name|lower }}'s whole story, including what it thinks of you, but nothing else in your museum.</p>
+      {% include "museum/includes/share_rows.html" %}
+      <form method="post" action="{% url 'museum:share' exhibit.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--block">make a link</button>
+      </form>
+    {% endif %}
+    <a class="btn btn--ghost btn--block" href="{{ exhibit.get_absolute_url }}" data-close-dialog>done</a>
+  </div>
+</dialog>
+
 <dialog class="alert" id="delete-alert" aria-labelledby="delete-title" aria-describedby="delete-text">
   <h2 class="alert__title" id="delete-title">delete {{ exhibit.name|lower }}?</h2>
   <p class="alert__text" id="delete-text">its whole story and photo are gone for good.</p>
@@ -168,4 +108,5 @@
 
 {% block scripts %}
 <script src="{% static 'js/recap.js' %}" defer></script>
+<script src="{% static 'js/share.js' %}" defer></script>
 {% endblock %}

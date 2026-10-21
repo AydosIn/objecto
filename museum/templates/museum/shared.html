@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}{% endblock %}
+{% block meta %}
+  <meta name="description" content="{{ exhibit.placard|lower }}">
+  <meta name="robots" content="noindex, nofollow">
+  {# The preview card in telegram, messages and whatsapp #}
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="object biographies">
+  <meta property="og:title" content="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}">
+  <meta property="og:description" content="“{{ exhibit.placard|lower }}”">
+  <meta property="og:url" content="{{ share_url }}">
+  <meta property="og:image" content="{{ preview_image }}">
+  <meta name="twitter:card" content="summary_large_image">
+{% endblock %}
+{% block html_class %}is-recap{% endblock %}
+{% block field %}{{ fields.0.slug }}{% endblock %}
+{% block page_class %}page--flush{% endblock %}
+
+{% block content %}
+<div class="recap" data-recap>
+  {% include "museum/includes/story.html" with opinion_heading="what it thinks of its human" %}
+
+  <section class="slide field--midnight" data-slide aria-labelledby="s-card">
+    <div class="slide__inner wrap-up">
+      <h2 class="visually-hidden" id="s-card">{{ exhibit.name|lower }}'s card</h2>
+      {% include "museum/includes/placard.html" with since_label="in the museum since" %}
+      {% include "museum/includes/share_rows.html" with reveal=6 visitor=True %}
+      <div class="share-cta" data-reveal style="--i:8">
+        <p class="talk">your stuff has opinions too.</p>
+        {% if user.is_authenticated %}
+          <a class="btn" href="{% url 'museum:new' %}">add an object</a>
+        {% else %}
+          <a class="btn" href="{% url 'signup' %}">make your stuff talk</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/recap.js' %}" defer></script>
+<script src="{% static 'js/share.js' %}" defer></script>
+{% endblock %}

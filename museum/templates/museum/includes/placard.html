@@ -1,0 +1,17 @@
+{# The summary card at the end of a recap. Needs exhibit, aura, fields and photo_url. #}
+<article class="placard field--{{ fields.0.slug }}">
+  <div class="placard__top">
+    <img src="{{ photo_url }}" alt="">
+    <div>
+      <p class="placard__name">{{ exhibit.name|lower }}</p>
+      <p class="small">{{ exhibit.title|lower }}</p>
+    </div>
+  </div>
+  <blockquote class="placard__quote">{{ exhibit.placard|lower }}</blockquote>
+  <dl class="facts">
+    <div><dt>it's a</dt><dd>{{ exhibit.object_type|lower }}</dd></div>
+    <div><dt>aura</dt><dd>{{ aura.name }}</dd></div>
+    {% if exhibit.rivals %}<div><dt>nemesis</dt><dd>{{ exhibit.rivals.0.name|lower }}</dd></div>{% endif %}
+    <div><dt>{{ since_label|default:"in your museum since" }}</dt><dd>{{ exhibit.created_at|date:"j M Y"|lower }}</dd></div>
+  </dl>
+</article>

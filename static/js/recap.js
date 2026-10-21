@@ -299,16 +299,6 @@
     }, { rootMargin: '-45% 0px -45% 0px' });
     slides.forEach(function (slide) { observer.observe(slide); });
 
-    // Share the end card where the phone can share (the page itself is private,
-    // so it shares the words, not a link).
-    const share = recap.querySelector('[data-share]');
-    if (share && navigator.share) {
-      share.hidden = false;
-      share.addEventListener('click', function () {
-        navigator.share({ title: 'object biographies', text: share.dataset.shareText }).catch(function () {});
-      });
-    }
-
     // Tapping a slide (not a control, not while selecting text) moves to the next one.
     recap.addEventListener('click', function (event) {
       if (event.target.closest('a, button, input, textarea, label, .card, .placard')) return;

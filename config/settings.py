@@ -36,6 +36,18 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
+# HTTPS only in production. Vercel already redirects http:// and sends HSTS; these make
+# Django do the same on any host, and keep the login and CSRF cookies off plain http.
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 365
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+# The admin lives at a path bots don't guess. Set ADMIN_URL in .env, e.g. "backstage-x7k2/".
+ADMIN_URL = env('ADMIN_URL', default='admin/').strip('/') + '/'
+
 
 # Application definition
 
@@ -46,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'axes',
     'accounts',
     'museum',
 ]
@@ -60,6 +73,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.ContentSecurityPolicyMiddleware',
+    # Last, as django-axes requires: turns a locked-out login into the lockout page.
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -93,6 +109,27 @@ DATABASES = {
 
 # Users log in with email + password (accounts.User has no username).
 AUTH_USER_MODEL = 'accounts.User'
+
+# django-axes first: it refuses to even check the password while a login is locked out.
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Brute-force protection for the login and admin pages: 5 wrong passwords for one email
+# from one IP locks that pair out for an hour. Locking by the pair (not the IP alone)
+# means classmates behind one school network can't lock each other out.
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1  # hours
+AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = 'registration/locked_out.html'
+AXES_CLIENT_IP_CALLABLE = 'accounts.security.client_ip'
+AXES_USERNAME_CALLABLE = 'accounts.security.login_username'
+
+# How many accounts one IP can create per 24 hours. Generous, because a whole class
+# signing up from one school network should still work.
+SIGNUPS_PER_IP_PER_DAY = env.int('SIGNUPS_PER_IP_PER_DAY', default=10)
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'museum:index'
@@ -169,6 +206,26 @@ if all(env(key, default='') for key in R2_KEYS):
         },
         'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
     }
+    R2_ORIGIN = f"https://{env('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"
+else:
+    R2_ORIGIN = ''
+
+# Only our own files may run or load (config/middleware.py). The one inline script, in
+# base.html, is allowed by its hash; change that script and the hash must change too
+# (a test checks). Inline styles stay allowed because templates set colours with style="".
+CONTENT_SECURITY_POLICY = {
+    'default-src': ["'self'"],
+    'script-src': ["'self'", "'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo='"],
+    'style-src': ["'self'", "'unsafe-inline'"],
+    # blob: is the photo preview on the upload page; R2 serves the stored photos.
+    'img-src': ["'self'", 'data:', 'blob:'] + ([R2_ORIGIN] if R2_ORIGIN else []),
+    'font-src': ["'self'"],
+    'connect-src': ["'self'"],
+    'object-src': ["'none'"],
+    'base-uri': ["'self'"],
+    'form-action': ["'self'"],
+    'frame-ancestors': ["'none'"],
+}
 
 
 # Gemini (used from Phase 5 on)
@@ -184,11 +241,15 @@ GEMINI_PRICE_OUTPUT_PER_M = env.float('GEMINI_PRICE_OUTPUT_PER_M', default=3.75)
 
 # Interviews (new exhibit, reroll, rename) each user gets per day. Staff are not limited.
 DAILY_GENERATION_LIMIT = env.int('DAILY_GENERATION_LIMIT', default=5)
+# Interviews for the whole site per day, so many accounts can't drain the shared quota.
+SITE_DAILY_GENERATION_LIMIT = env.int('SITE_DAILY_GENERATION_LIMIT', default=200)
 
 # Tests must never call the real API: an unmocked call fails fast instead.
 if 'test' in sys.argv[1:2]:
     GEMINI_API_KEY = ''
     SILENCED_SYSTEM_CHECKS = ['museum.W001']
+    # The test client talks plain http; with this on, every request would be a redirect.
+    SECURE_SSL_REDIRECT = False
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

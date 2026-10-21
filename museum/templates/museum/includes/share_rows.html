@@ -1,0 +1,52 @@
+{% comment %}
+  The ways to send an exhibit, as one card of rows. Rows marked hidden only show when
+  share.js finds the phone can do them (its own share sheet, sending a file).
+  With share_url: telegram, messages, the phone's share sheet, and with copy=True the link
+  itself to copy. Always: the pdf as a download, and as a file to send unless visitor=True
+  (the public page keeps its last slide short).
+  Needs share_url, share_text, pdf_url and pdf_filename (views.share_context).
+{% endcomment %}
+<div class="card"{% if reveal %} data-reveal style="--i:{{ reveal }}"{% endif %} data-share
+     data-share-url="{{ share_url }}" data-share-text="{{ share_text }}"
+     data-pdf-url="{{ pdf_url }}" data-pdf-name="{{ pdf_filename }}">
+  {% if share_url %}
+    {% if copy %}
+      <div class="row field">
+        <label class="field__label" for="share-link">the link</label>
+        <input id="share-link" type="url" value="{{ share_url }}" readonly>
+      </div>
+      <button type="button" class="row row-action" data-copy>
+        <span class="glyph" aria-hidden="true"><svg class="icon"><use href="#i-link"></use></svg></span>
+        copy the link
+        <span class="row-action__meta" data-copy-status aria-live="polite"></span>
+      </button>
+    {% endif %}
+    <button type="button" class="row row-action" data-share-link hidden>
+      <span class="glyph" style="--g:#ff6a13; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-share"></use></svg></span>
+      send it to…
+      <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+    </button>
+    <a class="row row-action" href="https://t.me/share/url?url={{ share_url|urlencode:'' }}&amp;text={{ share_text|urlencode:'' }}" target="_blank" rel="noopener">
+      <span class="glyph" style="--g:#1fa2ff; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-send"></use></svg></span>
+      telegram
+      <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+    </a>
+    <a class="row row-action" href="sms:?&amp;body={{ share_text|urlencode:'' }}%20{{ share_url|urlencode:'' }}">
+      <span class="glyph" style="--g:#2be0a0; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-chat"></use></svg></span>
+      messages
+      <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+    </a>
+  {% endif %}
+  {% if not visitor %}
+  <button type="button" class="row row-action" data-share-pdf hidden>
+    <span class="glyph" style="--g:#ff2e7e; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-doc"></use></svg></span>
+    send the pdf
+    <span class="row-action__meta" data-pdf-status></span>
+  </button>
+  {% endif %}
+  <a class="row row-action" href="{{ pdf_url }}" download="{{ pdf_filename }}">
+    <span class="glyph" style="--g:#ffd43b; --gi:#111" aria-hidden="true"><svg class="icon"><use href="#i-download"></use></svg></span>
+    download the pdf
+    <svg class="icon row-action__chevron" aria-hidden="true"><use href="#i-chevron"></use></svg>
+  </a>
+</div>

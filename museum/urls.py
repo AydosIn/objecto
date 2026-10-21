@@ -11,4 +11,7 @@ urlpatterns = [
     path('<int:pk>/regenerate/', views.ExhibitRegenerateView.as_view(), name='regenerate'),
     path('<int:pk>/rename/', views.ExhibitRenameView.as_view(), name='rename'),
     path('<int:pk>/delete/', views.ExhibitDeleteView.as_view(), name='delete'),
+    path('<int:pk>/share/', views.ExhibitShareView.as_view(), name='share'),
+    path('<int:pk>/unshare/', views.ExhibitUnshareView.as_view(), name='unshare'),
+    path('<int:pk>/pdf/', views.ExhibitPdfView.as_view(), name='pdf'),
 ]

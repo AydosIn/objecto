@@ -151,14 +151,15 @@ class SystemPromptAdmin(admin.ModelAdmin):
 
 @admin.register(Exhibit)
 class ExhibitAdmin(admin.ModelAdmin):
-    list_display = ('thumbnail', 'name', 'title', 'object_type', 'owner', 'created_at')
+    list_display = ('thumbnail', 'name', 'title', 'object_type', 'owner', 'shared', 'created_at')
     list_display_links = ('thumbnail', 'name')
-    list_filter = ('owner', 'model_name', 'prompt_version')
+    list_filter = (('shared_at', admin.EmptyFieldListFilter), 'owner', 'model_name', 'prompt_version')
     list_select_related = ('owner',)
     search_fields = ('name', 'title', 'object_type', 'placard', 'owner__email')
     date_hierarchy = 'created_at'
     autocomplete_fields = ('owner',)
-    readonly_fields = ('image_preview', 'created_at', 'updated_at')
+    readonly_fields = ('image_preview', 'share_token', 'shared_at', 'created_at', 'updated_at')
+    actions = ['stop_sharing']
 
     fieldsets = (
         ('Object', {'fields': ('owner', 'image', 'image_preview', 'object_type')}),
@@ -178,7 +179,17 @@ class ExhibitAdmin(admin.ModelAdmin):
             },
         ),
         ('Generation', {'fields': ('model_name', 'prompt_version', 'created_at', 'updated_at')}),
+        ('Sharing', {'fields': ('share_token', 'shared_at')}),
     )
+
+    @admin.display(description='Shared', boolean=True, ordering='shared_at')
+    def shared(self, obj):
+        return obj.is_shared
+
+    @admin.action(description='Stop sharing the selected exhibits (their links stop working)')
+    def stop_sharing(self, request, queryset):
+        count = queryset.exclude(share_token=None).update(share_token=None, shared_at=None)
+        self.message_user(request, f'{count} link(s) turned off.')
 
     @admin.display(description='Photo')
     def thumbnail(self, obj):

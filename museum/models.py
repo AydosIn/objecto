@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from pathlib import Path
 
@@ -112,6 +113,16 @@ class Exhibit(models.Model):
         related_name='exhibits',
         help_text='Which system prompt wrote the biography. Empty = the default prompt in code.',
     )
+    # Sharing is opt-in: with a token, anyone with the link /s/<token>/ can read this one
+    # story. Stopping sharing clears it, so the old link dies and a new share gets a new one.
+    share_token = models.CharField(
+        max_length=32,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text='Secret part of the public link. Empty = only the owner can see it.',
+    )
+    shared_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -127,6 +138,22 @@ class Exhibit(models.Model):
 
     def get_absolute_url(self):
         return reverse('museum:detail', args=[self.pk])
+
+    @property
+    def is_shared(self):
+        return bool(self.share_token)
+
+    def start_sharing(self):
+        """Give the exhibit a public link (keeps the existing one if it has one)."""
+        if not self.share_token:
+            self.share_token = secrets.token_urlsafe(16)
+            self.shared_at = timezone.now()
+            self.save(update_fields=['share_token', 'shared_at'])
+
+    def stop_sharing(self):
+        self.share_token = None
+        self.shared_at = None
+        self.save(update_fields=['share_token', 'shared_at'])
 
 
 class GenerationLog(models.Model):

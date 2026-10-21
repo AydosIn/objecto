@@ -1,0 +1,75 @@
+{% comment %}
+  The recap slides, from the first slide to the opinion. Used by the owner's exhibit page
+  and the public shared page, which each add their own last slide.
+  {% include "museum/includes/story.html" with photo_url=... opinion_heading=... %}
+  Needs exhibit, aura and fields in the context.
+{% endcomment %}
+  <nav class="progress progress--static" aria-label="{{ exhibit.name|lower }}'s story" data-progress></nav>
+  <div class="story-head story-head--fixed">
+    <img src="{{ photo_url }}" alt="">
+    <span>{{ exhibit.name|lower }} <span class="story-head__note">{{ exhibit.object_type|lower }}</span></span>
+  </div>
+
+  <section class="slide field--{{ fields.0.slug }}" data-slide aria-label="meet {{ exhibit.name|lower }}">
+    <div class="slide__inner slide__inner--split">
+      <h1 class="shout" data-split>{{ exhibit.name|lower }}</h1>
+      <p class="talk" data-reveal>{{ exhibit.title|lower }}</p>
+      <div class="chips" data-reveal>
+        <span class="chip chip--soft"><span class="swatch" style="--sw: {{ aura.hex }}"></span>aura: {{ aura.name }}</span>
+      </div>
+      <figure class="print print--hero">
+        <img src="{{ photo_url }}" alt="{{ exhibit.name|lower }}, the {{ exhibit.object_type|lower }}">
+      </figure>
+      <p class="hint" data-reveal style="--i:6"><svg class="icon" aria-hidden="true"><use href="#i-down"></use></svg>tap or scroll for the lore</p>
+    </div>
+  </section>
+
+  <section class="slide field--{{ fields.1.slug }}" data-slide aria-labelledby="s-origin">
+    <div class="slide__inner">
+      <h2 class="say" id="s-origin">where it came from</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.origin_story|lower|linebreaks }}</div>
+    </div>
+  </section>
+
+  <section class="slide field--{{ fields.2.slug }}" data-slide aria-labelledby="s-trauma">
+    <div class="slide__inner">
+      <h2 class="say" id="s-trauma">the trauma</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.trauma|lower|linebreaks }}</div>
+    </div>
+  </section>
+
+  {% if exhibit.rivals %}
+    <section class="slide field--{{ fields.3.slug }}" data-slide aria-labelledby="s-beef">
+      <div class="slide__inner">
+        <h2 class="say" id="s-beef">the beef</h2>
+        <ul class="rivals">
+          {% for rival in exhibit.rivals %}
+            <li class="rival" style="--i:{{ forloop.counter|add:forloop.counter|add:1 }}">
+              <p class="rival__name say"><span class="vs">vs</span>{{ rival.name|lower }}</p>
+              <p class="talk">{{ rival.reason|lower }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="slide field--{{ fields.4.slug }}" data-slide aria-labelledby="s-hopes">
+    <div class="slide__inner">
+      <h2 class="say" id="s-hopes">hopes and fears</h2>
+      <div class="talk" data-reveal style="--i:4">{{ exhibit.hopes_and_fears|lower|linebreaks }}</div>
+    </div>
+  </section>
+
+  <section class="slide field--{{ fields.5.slug }}" data-slide aria-labelledby="s-opinion">
+    <div class="slide__inner">
+      <h2 class="say" id="s-opinion">{{ opinion_heading }}</h2>
+      <div class="thread">
+        <p class="thread__from" data-reveal><img src="{{ photo_url }}" alt="">{{ exhibit.name|lower }}</p>
+        <div class="thread__stack">
+          <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="bubble">{{ exhibit.opinion_of_owner|lower|linebreaks }}</div>
+        </div>
+      </div>
+    </div>
+  </section>

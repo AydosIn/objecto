@@ -21,7 +21,7 @@ The project is a Django practice build. v1 covers the core loop (photo → ident
 - Practice the Django fundamentals: models, auth, forms, file uploads, templates, static files, service layers, tests, settings and secrets.
 
 ### Non-goals (v1)
-- Public sharing or public museum links.
+- Public museum links (one exhibit can be shared, see §6.7; a whole museum can't).
 - Cross-object lore (objects that reference each other as rivals or friends).
 - Native mobile app or SPA framework.
 - Payments, social features, comments, likes.
@@ -47,6 +47,8 @@ Someone who wants a quick laugh and a collection to scroll through and show frie
 | U8 | user | rename an object if the AI misidentified it | the story is about the right thing |
 | U9 | user | delete an exhibit | I can curate my museum |
 | U10 | user | optionally write a short "about me" | the object's opinion of me can be more personal |
+| U11 | user | send an exhibit to friends on Telegram, Messages or anywhere else | they can laugh at it too |
+| U12 | user | download an exhibit as a PDF | I can keep, print or send the story as a file |
 
 ## 5. Core user flow
 
@@ -110,6 +112,13 @@ Landing page ──► Sign up / Log in ──► My Museum (grid)
 ### 6.6 Admin
 - FR-24: Django admin at `/admin/` (staff only) lists users, profiles, exhibits (with image thumbnails, search and filters) and generation logs.
 - FR-25: The system prompt is edited in the admin (Museum → System prompts), not in code. Every text edit is saved as a new version; exactly one version is active (enforced by a database constraint) and is used for every new biography. Versions can be activated with an admin action; the active one can't be deleted. Each exhibit records the prompt version that wrote it. With no active version, the default prompt in `museum/prompts.py` is used. `try_biography --prompt N` tries a version before activating it.
+
+### 6.7 Sharing
+- FR-26: Exhibits are private until the owner makes a link (the "share or save as pdf" sheet on the exhibit page). The link is `/s/<token>/` with a random 22-character token, readable by anyone who has it, without logging in. It shows that one exhibit's story (including the opinion of its owner) and nothing else: no owner name or email, no buttons to change it.
+- FR-27: The owner can delete the link. The old link (page, photo and PDF) is a 404 from then on; sharing again makes a new link. Staff can turn links off in the admin.
+- FR-28: The sheet sends the link to Telegram, Messages (SMS), the phone's own share sheet (any installed app), or copies it. Link previews get a title, the placard and the photo (Open Graph tags; the photo is served at a stable address, `/s/<token>/photo.jpg`).
+- FR-29: Every exhibit can be downloaded as a PDF, by its owner always and by visitors while it is shared: a cover in its aura colour with the name, title, photo and placard, then every section. On phones that can share files, "send the pdf" hands the file to the share sheet.
+- FR-30: Shared pages, photos and PDFs send `X-Robots-Tag: noindex, nofollow`: a link is for the people it was sent to, not for search engines.
 
 ## 7. Non-functional requirements
 
@@ -240,6 +249,10 @@ object-biographies/
 | `/museum/<id>/regenerate/` | Regenerate | POST |
 | `/museum/<id>/rename/` | Rename + regenerate | POST |
 | `/museum/<id>/delete/` | Delete (confirm page) | GET/POST |
+| `/museum/<id>/share/`, `/museum/<id>/unshare/` | Make or delete the public link | POST |
+| `/museum/<id>/pdf/` | The owner's PDF | GET |
+| `/s/<token>/` | Shared exhibit (public) | GET |
+| `/s/<token>/photo.jpg`, `/s/<token>/story.pdf` | Its photo and PDF (public) | GET |
 
 ### 9.5 Request handling
 v1 calls Gemini synchronously inside the POST request. It's simple and fine for a single user locally. The JS shows a loading overlay ("Interviewing your object…") and disables the submit button so the user can't double-submit. Moving to a background task queue is future scope.
@@ -269,7 +282,7 @@ v1 calls Gemini synchronously inside the POST request. It's simple and fine for 
 
 ## 12. Future scope (not v1)
 - **Cross-object lore:** new biographies reference existing exhibits as rivals, friends or exes; a "relationships" view.
-- **Public sharing:** shareable link for an exhibit or a whole museum, with a nice social preview image.
+- **Public museum links:** share a whole museum, not just one exhibit; a designed preview image instead of the photo.
 - **Biography history:** keep old versions when regenerating.
 - **Themes / genres:** noir, Shakespearean, nature documentary narrator.
 - **Voice narration** of biographies (TTS).

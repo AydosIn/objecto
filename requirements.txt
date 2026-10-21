@@ -3,6 +3,7 @@ django-axes==8.3.1
 django-environ==0.14.0
 django-storages[s3]==1.14.6
 Django==5.2.18
+fpdf2==2.8.9
 google-genai==2.31.0
 pillow-heif==1.8.1
 pillow==13.0.0

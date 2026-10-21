@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script>document.documentElement.classList.add('js')</script>
   <title>{% block title %}object biographies{% endblock %}</title>
+  {% block meta %}
   <meta name="description" content="snap a photo of anything in your house and it tells you its life story, its trauma, its beef, and what it really thinks of you.">
+  {% endblock %}
   <meta name="theme-color" content="#5b2bff">
   <link rel="manifest" href="{% static 'manifest.json' %}">
   <link rel="icon" href="{% static 'img/icon-192.png' %}" type="image/png">
@@ -31,6 +33,11 @@
     <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
     <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M8 7.5l4-4 4 4M7 11H6a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 18 11h-1"/></symbol>
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M20.5 3.5 3.5 10.6l6.6 2.8 2.8 6.6zM20.5 3.5l-10.4 9.9"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M12 4.5c-4.7 0-8.5 3.1-8.5 7 0 2.1 1.1 4 2.9 5.3l-.9 3.2 3.7-1.8c.9.2 1.8.3 2.8.3 4.7 0 8.5-3.1 8.5-7s-3.8-7-8.5-7z"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M13.5 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8.5zM13.5 3.5v5h5M9 13h6M9 16.5h4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h7M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5"/></symbol>
   </svg>
 

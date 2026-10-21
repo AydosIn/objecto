@@ -1866,3 +1866,17 @@ dialog::backdrop {
 .placard.field--midnight {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
 }
+
+/* ------------------------------------------------------------ Sharing */
+
+/* Rows share.js may never show: when the first row is one, the next drops its divider */
+.card > [hidden]:first-child + .row::before {
+  content: none;
+}
+
+.share-cta {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  text-align: center;
+}
